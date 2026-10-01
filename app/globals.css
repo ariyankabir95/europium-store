@@ -1,0 +1,13 @@
+@tailwind base; @tailwind components; @tailwind utilities;
+html { scroll-behavior: smooth; }
+body { @apply bg-warm text-charcoal font-sans antialiased overflow-x-clip; }
+:focus-visible { outline: 1px solid rgb(var(--theme-charcoal)); outline-offset: 3px; }
+@layer components {
+  .container-site { @apply mx-auto w-full max-w-site px-5 md:px-10; }
+  .btn { @apply inline-flex min-h-12 items-center justify-center border px-8 text-xs tracking-[0.18em] uppercase transition-colors duration-300; }
+  .btn-dark { @apply btn border-charcoal bg-charcoal text-warm hover:bg-ink; }
+  .btn-light { @apply btn border-warm bg-warm text-charcoal hover:bg-cream; }
+  .btn-line { @apply btn border-current bg-transparent hover:bg-charcoal hover:text-warm; }
+  .section { @apply py-16 md:py-24; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; animation: none !important; scroll-behavior: auto !important; } }
