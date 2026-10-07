@@ -25,8 +25,16 @@ const galleryImages = p.colorImages?.[color]?.length
     const canAdd = !!selected && selected.available;
     const pickSize = (s) => { setSize(s); if (color && !comboExists(s, color))
         setColor(""); setMsg(""); };
-    const pickColor = (c) => { setColor(c); if (size && !comboExists(size, c))
-        setSize(""); setMsg(""); };
+    const pickColor = (c) => {
+  setColor(c);
+  setImg(0);
+
+  if (size && !comboExists(size, c)) {
+    setSize("");
+  }
+
+  setMsg("");
+};
     const submit = async () => {
         if (!size || !color)
             return setMsg("Choose a size and color.");
