@@ -179,5 +179,66 @@ export default async function Edit({ params, searchParams }) {
           </div>
           <form action={replaceProductImage} className="mt-3 space-y-2 border-t border-sand pt-3"><input type="hidden" name="id" value={p.id}/><input type="hidden" name="image_id" value={m.id}/><ImageField name="file" label="Replace this image" help="Saved only when you press Replace."/><SubmitButton className="btn-line min-h-11 px-4" pending="Uploading…">Replace</SubmitButton></form>
         </li>))}</ul>
-      <form action={uploadProductImages} className="space-y-3 border-t border-sand pt-4"><input type="hidden" name="id" value={p.id}/><h3 className="text-xs tracking-[0.18em] uppercase">Add images</h3><ImageField name="files" label="Choose one or more images" multiple help={`Up to 12 at once. They are added after the existing images.`}/><div><label htmlFor="alt" className="mb-1 block text-sm">Alt text (optional)</label><input id="alt" name="alt" placeholder={p.name} className="min-h-11 w-full max-w-md border border-sand bg-transparent px-3"/></div><SubmitButton pending="Uploading…">Upload images</SubmitButton></form></section>}</>);
+      <form action={uploadProductImages} className="space-y-3 border-t border-sand pt-4">
+  <input type="hidden" name="id" value={p.id} />
+
+  <h3 className="text-xs tracking-[0.18em] uppercase">
+    Add images
+  </h3>
+
+  <ImageField
+    name="files"
+    label="Choose one or more images"
+    multiple
+    help="Up to 12 at once. They are added after the existing images."
+  />
+
+  <div>
+    <label
+      htmlFor="image-color"
+      className="mb-1 block text-sm"
+    >
+      Image color
+    </label>
+
+    <select
+      id="image-color"
+      name="color_name"
+      defaultValue=""
+      className="min-h-11 w-full max-w-md border border-sand bg-transparent px-3"
+    >
+      <option value="">Shared / all colors</option>
+
+      {[...new Set(
+        (p.variants ?? [])
+          .map((v) => v.color_name)
+          .filter(Boolean)
+      )].map((color) => (
+        <option key={color} value={color}>
+          {color}
+        </option>
+      ))}
+    </select>
+  </div>
+
+  <div>
+    <label
+      htmlFor="alt"
+      className="mb-1 block text-sm"
+    >
+      Alt text (optional)
+    </label>
+
+    <input
+      id="alt"
+      name="alt"
+      placeholder={p.name}
+      className="min-h-11 w-full max-w-md border border-sand bg-transparent px-3"
+    />
+  </div>
+
+  <SubmitButton pending="Uploading…">
+    Upload images
+  </SubmitButton>
+</form>
 }
