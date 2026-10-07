@@ -16,7 +16,15 @@ export async function uploadProductImages(fd) {
     const files = fd.getAll("files");
     if (!files.some((f) => f instanceof File && f.size > 0))
         done(pid, "ierr", "Choose at least one image first.");
-    const { added, errors } = await addProductImages(sb, pid, files, str(fd, "alt", 200));
+    const colorName = str(fd, "color_name", 60).trim() || null;
+
+const { added, errors } = await addProductImages(
+  sb,
+  pid,
+  files,
+  str(fd, "alt", 200),
+  colorName
+);
     refreshStorefront();
     if (errors.length)
         done(pid, "ierr", `${added ? `${added} image(s) added. ` : ""}Image upload failed for: ${errors.join(" ")} Existing images were kept.`);
