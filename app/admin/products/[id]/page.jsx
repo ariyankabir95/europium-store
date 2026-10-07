@@ -237,8 +237,11 @@ export default async function Edit({ params, searchParams }) {
     />
   </div>
 
-  <SubmitButton pending="Uploading…">
+    <SubmitButton pending="Uploading…">
     Upload images
   </SubmitButton>
 </form>
+</section>}
+</>
+);
 }
