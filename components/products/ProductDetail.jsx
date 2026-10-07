@@ -7,9 +7,12 @@ import SmartImage from "@/components/ui/SmartImage";
 export default function ProductDetail({ product: p }) {
     const { add, wish, toggleWish, currency } = useStore();
     const [img, setImg] = useState(0);
-    const galleryImages = p.colorImages?.[color] ?? p.images;
-    const [size, setSize] = useState("");
-    const [color, setColor] = useState(p.colors[0]?.name ?? "");
+const [size, setSize] = useState("");
+const [color, setColor] = useState(p.colors[0]?.name ?? "");
+
+const galleryImages = p.colorImages?.[color]?.length
+  ? p.colorImages[color]
+  : p.images;
     const [qty, setQty] = useState(1);
     const [z, setZ] = useState(null);
     const [msg, setMsg] = useState("");
