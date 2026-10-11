@@ -43,7 +43,26 @@ Run `supabase/migrations/0011_cms.sql` after the earlier migrations. It only **a
 - Footer links to `/shipping`, `/returns`, `/faq`, `/journal`, `/privacy`, `/terms` were already dead links before the CMS. Create CMS pages with those slugs to make them work.
 
 ## Deploying on Render
-Web Service, Node 20+. Build command: `npm install && npm run build`. Start command: `npm start`. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (server only) and `NEXT_PUBLIC_SITE_URL`. `netlify.toml` and `netlify/functions` are kept for compatibility; the stale-order release function is Netlify-scheduled, so on Render run `release_stale_orders` (migration 0006) with a Render cron job or Supabase pg_cron instead.
+Web Service, Node 20+. Build command: `npm install && npm run build`. Start command: `npm start`. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (server only), `NEXT_PUBLIC_SITE_URL` and `CRON_SECRET` (server only — see below). `netlify.toml` and `netlify/functions` are kept for compatibility; the stale-order release function (`netlify/functions/release-stale.mjs`) is a Netlify Scheduled Function and does **not** run on Render. Use the Render Cron Job below instead — creating `app/api/cron/release-stale/route.js` in this repo does not by itself schedule anything; the Render Cron Job is a separate step you create in the Render dashboard.
+
+### Scheduling the stale-order release job on Render
+`app/api/cron/release-stale/route.js` is a thin, secret-protected HTTP wrapper around the existing `release_stale_orders` SQL function (migration `0006_fixes_storage.sql`), so a plain Render Cron Job can call it on a schedule — Render Cron Jobs cannot call a Postgres function directly.
+
+1. In the Render dashboard, add an environment variable **`CRON_SECRET`** to the Web Service: a long, randomly generated value (e.g. `openssl rand -hex 32`). Keep it private — never commit it, never put it in this README, never put it in a Render Cron Job's visible command/name.
+2. Create a separate **Render Cron Job** (not the Web Service itself) in the same Render project:
+   - Schedule: `*/30 * * * *` (every 30 minutes — matches the old Netlify schedule).
+   - Command: a single authenticated HTTPS request to the deployed route, for example:
+     ```
+     curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://<your-render-service>.onrender.com/api/cron/release-stale
+     ```
+   - Give the Cron Job its own copy of the same `CRON_SECRET` value (Render Cron Jobs have their own environment variables; it must match the Web Service's value exactly).
+3. Optionally set **`STALE_ORDER_MINUTES`** on the Web Service to override the default. The route enforces the same floor as the old Netlify function: never below 60 minutes, defaulting to **1440 (24h)**. Do not lower this below 24h without first confirming it with whoever verifies bKash payments — a shorter window can cancel an order that is still only awaiting manual payment confirmation, not actually abandoned.
+4. The route only accepts `GET` with a correct `Authorization: Bearer <CRON_SECRET>` header; every other request (wrong method, missing or wrong secret) is rejected (401) without touching the database. Verify this before relying on it:
+   ```
+   curl -i https://<your-render-service>.onrender.com/api/cron/release-stale            # expect 401, no secret sent
+   curl -i -H "Authorization: Bearer wrong" https://<your-render-service>.onrender.com/api/cron/release-stale   # expect 401
+   curl -i -H "Authorization: Bearer $CRON_SECRET" https://<your-render-service>.onrender.com/api/cron/release-stale  # expect 200, {"released": N}
+   ```
 
 
 ## Audit notes (October 2026)
@@ -52,6 +71,11 @@ Web Service, Node 20+. Build command: `npm install && npm run build`. Start comm
 - `release_stale_orders` job now waits `STALE_ORDER_MINUTES` (default 24h) instead of 60 min, because bKash is verified by hand.
 - Added `.env.example`, `.gitignore`, `next.config.mjs` (security headers), `app/global-error.tsx`, `npm run typecheck`.
 - Still recommended: add rate limiting / CAPTCHA to `/api/checkout`, `/api/contact`, `/api/newsletter`, `/api/reviews` (anyone can reserve stock or spam); commit `package-lock.json` after the first `npm install`.
+
+## Phase 1 notes (this change)
+- Added `app/api/cron/release-stale/route.js`: a `CRON_SECRET`-protected route calling the existing `release_stale_orders` RPC, so the stale-order release job can run on Render (see "Scheduling the stale-order release job on Render" above). No SQL changes — `release_stale_orders` (migration `0006`) was verified unchanged and already `service_role`-only; this route only calls it, through the same `supabaseAdmin()` service-role client already used elsewhere in the project (`lib/supabase/admin.js`).
+- `npm install` / `npm run build` were **not** run: this sandbox has no general internet access. DNS resolution fails for `registry.npmjs.org` and even `github.com` (`getent hosts` returns "not found" for both), while a handful of explicitly allowlisted hosts (e.g. `api.anthropic.com`) resolve fine — confirmed directly, not inferred. `package-lock.json` is still not committed for the same reason. **Run `npm install && npm run build` yourself before deploying this change.**
+- What *was* verified in this sandbox, directly: the new route's ESM syntax (`node --input-type=module --check`, after confirming that check form actually catches errors — plain `node --check` on a `.js` file without `"type":"module"` in `package.json` silently passes invalid syntax, which is a trap worth knowing about for future verification in this repo); and the route's two pieces of real logic (the timing-safe secret comparison, and the `STALE_ORDER_MINUTES` floor/default/validation) extracted and run standalone with Node's built-in `assert` — both passed. The route was **not** exercised inside an actual Next.js dev/build server, and no HTTP request was sent to it, here or in production.
 
 
 ## Image management (October 2026)
