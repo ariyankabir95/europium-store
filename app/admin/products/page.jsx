@@ -5,6 +5,7 @@ import { requireAdmin, str, uuid } from "@/lib/admin";
 import { money } from "@/lib/format";
 import SmartImage from "@/components/ui/SmartImage";
 import Flash from "@/components/admin/Flash";
+import ConfirmButton from "@/components/admin/ConfirmButton";
 
 async function act(fd) {
   "use server";
@@ -51,7 +52,7 @@ export default async function Products({ searchParams }) {
           <form action={act} className="flex gap-2">
             <input type="hidden" name="product_id" value={p.id}/>
             <button name="op" value={p.published ? "unpublish" : "publish"} className="btn-line min-h-11 px-4">{p.published ? "Unpublish" : "Publish"}</button>
-            <button name="op" value="delete" className="btn-line min-h-11 px-4">Delete</button>
+            <ConfirmButton name="op" value="delete" message={`Delete “${p.name}”? Products with order history cannot be deleted; you can unpublish them instead.`} className="btn-line min-h-11 px-4 text-red-800">Delete</ConfirmButton>
           </form>
         </li>
       ))}</ul>
