@@ -65,12 +65,12 @@ async function sendTestEmail() {
         back("/admin/settings", "error", "Your admin account has no email address.");
     const result = await sendEmail({
         to: user.email,
-        subject: "Europium email test",
-        text: "Your Europium Resend email setup is working.",
-        html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:32px"><h1 style="margin:0 0 16px">Europium</h1><p>Your Resend email setup is working.</p><p style="color:#666;font-size:14px">This is a test email sent from the Europium admin panel.</p></div>`,
+        subject: "EUROPIUM Gmail SMTP email test",
+        text: "Your EUROPIUM Gmail SMTP email setup is working.",
+        html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:32px"><h1 style="margin:0 0 16px">Europium</h1><p>Your EUROPIUM Gmail SMTP email setup is working.</p><p style="color:#666;font-size:14px">This is a test email sent from the Europium admin panel.</p></div>`,
     });
     if (!result.ok)
-        back("/admin/settings", "error", "Test email could not be sent. Check Resend and EMAIL_FROM settings.");
+        back("/admin/settings", "error", "Test email could not be sent. Check Gmail SMTP environment variables and the Render logs.");
     back("/admin/settings", "ok", "Test email sent to your admin email address.");
 }
 const input = "min-h-11 w-full border border-sand bg-transparent px-3";
@@ -127,7 +127,7 @@ export default async function Settings({ searchParams }) {
       <h2 className="text-xs tracking-[0.18em] uppercase">Email test</h2>
       <p className="text-sm text-taupe">Send a test email to the email address of the currently signed-in admin account.</p>
       <button formAction={sendTestEmail} className="btn-line min-h-11 px-4">Send test email</button>
-      <p className="text-xs text-taupe">Testing uses the EMAIL_FROM value from .env.local. Do not put the Resend API key in the browser or GitHub.</p>
+      <p className="text-xs text-taupe">This test uses Gmail SMTP and sends to the signed-in admin email. Keep the Gmail App Password in Render environment variables only; never put it in GitHub or chat.</p>
     </section>
     <div className="flex flex-wrap items-center gap-3">
       <button className="btn-dark">Save settings</button>
