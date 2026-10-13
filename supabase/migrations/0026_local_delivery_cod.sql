@@ -35,7 +35,7 @@ declare
   zone text;
   initial_status text;
 begin
-  if p_payment_method not in ('bkash_manual', 'cod') then
+  if coalesce(p_payment_method, '') not in ('bkash_manual', 'cod') then
     raise exception 'invalid_payment';
   end if;
 
@@ -48,7 +48,7 @@ begin
   end if;
 
   zone := p_address->>'delivery_zone';
-  if zone not in ('epz_local', 'ashulia_bypail', 'savar_outer') then
+  if zone is null or zone not in ('epz_local', 'ashulia_bypail', 'savar_outer') then
     raise exception 'invalid_shipping_zone';
   end if;
 
