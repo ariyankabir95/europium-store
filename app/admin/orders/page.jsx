@@ -4,6 +4,7 @@ import { money } from "@/lib/format";
 import { sendOrderPlacedEmail, sendOrderStatusEmail, sendPaymentReceivedEmail } from "@/lib/email";
 import OrderStatusForm from "@/components/admin/OrderStatusForm";
 import ConfirmButton from "@/components/admin/ConfirmButton";
+import Flash from "@/components/admin/Flash";
 import { back } from "@/lib/cms-admin";
 
 const STATUS = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled", "refunded"], PAY = ["unpaid", "paid", "failed", "refunded"];
@@ -167,6 +168,7 @@ export default async function Orders() {
   return (
     <>
       <h1 className="mb-2 font-serif text-4xl">Orders</h1>
+      <Flash ok={undefined} error={undefined} />
       <p className="mb-3 text-sm text-taupe">Latest 100 active orders. Open “Order details” to see products, quantities, prices and shipping information.</p>
       <p className="mb-6 text-sm"><a href="/admin/trash" className="underline">View Trash / restore items</a></p>
       {error && <p role="alert" className="mb-4 border border-red-800 p-3 text-sm text-red-800">Could not load orders. Please refresh or check the server logs.</p>}
