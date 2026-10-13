@@ -134,3 +134,5 @@
 - Documentation audit: removed the stale stock-reactivation risk statement after adding migration `0024`, and clarified that Social Bar defaults preserve existing behavior pending the store owner's production decision.
 
 - Fixed saved-cart read failures: `lib/cart-server.js` now propagates database read errors instead of silently treating them as an empty cart. Cart API returns a visible retryable error, and checkout stops with a 503 before order creation if it cannot verify the saved cart. This is code-complete; CI and runtime/database behavior still need verification.
+
+- Hardened `app/api/cart/route.js`: clear/remove/quantity updates now check database errors; quantity updates report when the cart row is missing; product, variant and existing-quantity lookup failures return explicit retryable errors rather than being misreported as unavailable/out-of-stock. Build verification is required; live RLS behavior and browser testing remain pending.
