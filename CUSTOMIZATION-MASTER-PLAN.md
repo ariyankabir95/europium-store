@@ -90,6 +90,9 @@
 - [ ] Verify missing images, missing settings, unavailable CMS tables and empty states degrade gracefully.
 - [ ] Add/maintain security headers, input length limits and useful logging without exposing secrets or personal data.
 
+### Test documentation
+- Added [`docs/ORDER-STOCK-TEST-MATRIX.md`](docs/ORDER-STOCK-TEST-MATRIX.md) with disposable-database order/stock transition cases, rate-limit checks, email/admin regression checks and a pre-production release gate. These are planned checks, not claims that the database scenarios have passed.
+
 ## Known items from the existing repository audit
 
 - CAPTCHA and host-level IP throttling are not configured; the application-level database limiter for checkout, contact, newsletter and reviews requires migration `0023_public_rate_limits.sql`.
