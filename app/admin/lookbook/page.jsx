@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireAdmin, str, uuid } from "@/lib/admin";
 import { safeImage } from "@/lib/cms-schema";
+import Flash from "@/components/admin/Flash";
 
 const LIST = "/admin/lookbook";
 const back = (kind, message) => redirect(`${LIST}?${kind}=${encodeURIComponent(message)}`);
