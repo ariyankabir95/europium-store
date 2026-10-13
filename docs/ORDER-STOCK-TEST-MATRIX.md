@@ -43,7 +43,7 @@ Use test identities only. Call each route repeatedly within its configured time 
 - Verify only an actual transition to `paid` triggers the payment-received email, and a status change triggers the status email.
 - With migration `0025_order_email_recovery.sql) applied to the disposable database, verify each new event persists the exact payload and deterministic idempotency key before provider send.
 - Simulate a crash after the provider accepts an email but before `status='sent'`; run two recovery workers concurrently and verify Resend idempotency returns the same provider email rather than delivering a duplicate.
-- Verify a stale event younger than 20 hours is leased by only one worker and retried with the original stored payload/key; verify a stale event older than 20 hours becomes `needs_review` and is not automatically sent.
+- Verify a stale event younger than 20 hours is leased by only one worker and retried with the original stored payload/key; verify retries stop after five attempts, and a stale event older than 20 hours becomes `needs_review` and is not automatically sent.
 - Verify pre-migration `sending` rows with no stored payload are flagged for review only after their lease becomes stale.
 - Verify a non-retryable provider response becomes `needs_review`, while network/timeout/429/5xx failures retain the claim for safe retry.
 - Confirm the protected recovery route returns 401 for a missing/wrong bearer token, 503 when required configuration is absent, and a bounded summary for an authorized run.
