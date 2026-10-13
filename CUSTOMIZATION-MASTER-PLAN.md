@@ -80,7 +80,7 @@
 ### J. Adsterra and promotional placements
 - [x] Provide Admin enable/disable controls for the existing Social Bar and CMS Native Banner placements. Popunder/Smartlink are not injected by this repo, so they remain external Adsterra configuration rather than new scripts added without an explicit placement decision.
 - [x] Keep native banner placement editable from CMS; its visibility can also be globally disabled in Admin → Settings without deleting the section.
-- [ ] Avoid enabling popunder/social-bar scripts by default without an explicit store decision.
+- [ ] Confirm the store owner's desired default for Social Bar before production rollout. The branch preserves the existing behavior (enabled by default) and adds an Admin toggle; Popunder and Smartlink remain external Adsterra settings and are not injected by this repository.
 - [ ] Validate scripts/URLs and prevent arbitrary unsafe script injection through normal text fields.
 
 ### K. Performance, accessibility and reliability
@@ -98,7 +98,7 @@
 - Some footer destinations (shipping, returns, FAQ, journal, privacy, terms) may be dead links unless matching CMS pages exist.
 - Product `sold` count may not be updated, affecting best-seller ordering.
 - Product deletion now checks order history first and shows an actionable message to unpublish instead.
-- Re-activating cancelled orders may not re-reserve stock.
+- The branch adds migration `0024_reactivate_released_orders.sql` to re-reserve stock on reactivation; this corrects the known code gap but remains unverified against a disposable database until the migration is applied in a safe test environment.
 - Production schema already includes migrations through 0020 per the project's recent manual verification; confirm against the actual Supabase project before any future migration.
 
 ## Work log
@@ -125,5 +125,7 @@
 - Fixed the invalid nested form around the appearance-reset confirmation by extending the shared `ConfirmButton` to accept `formAction` and targeting the reset server action directly.
 - Fixed color-specific product gallery ordering: variant/color images are now sorted by their saved gallery order before being mapped to the selected color on the product page.
 - Added a confirmation prompt to the Admin product-delete action while retaining the existing server-side order-history safeguard.
-- GitHub Actions build verification passed for the latest code at commit `db1dd81a3479aaa62cb065841d40e275eda2bc49`; subsequent commits were also individually green through run `38334350745` at the time of the check.
+- GitHub Actions build verification passed for the current branch head at commit `7906142125a1472697b0cce0ee9c35e5850c14b6` (run `38334683829`, build job success). This verifies dependency installation and Next.js build only; it does not verify live Supabase migrations, payment, email delivery, or browser behavior.
 - No production database, live orders, payment statuses, or deployment configuration was changed by this branch work.
+
+- Documentation audit: removed the stale stock-reactivation risk statement after adding migration `0024`, and clarified that Social Bar defaults preserve existing behavior pending the store owner's production decision.
