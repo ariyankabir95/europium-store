@@ -1,0 +1,21 @@
+-- 0020_orders_admin_rls.sql (PROPOSED)
+-- Closes a bypass of admin_set_order_status's stock-safety logic: the blanket "admin all" policy from
+-- 0001_schema.sql (for all using (is_admin()) with check (is_admin())) grants admins direct INSERT/
+-- UPDATE/DELETE on `orders` via RLS, in addition to SELECT. No legitimate application code path uses
+-- that direct write access -- every real write to `orders` goes through a SECURITY DEFINER function
+-- (create_order, admin_set_order_status, release_stale_orders), each of which runs as its owner and
+-- bypasses RLS on the tables it touches regardless of policy (none sets row_security = on). The direct
+-- write grant is therefore unused by the app and only serves as an attack surface: a direct
+-- supabase.from('orders').update(...) call from an admin session skips admin_set_order_status's
+-- stock-state checks entirely -- verified empirically in a local, RLS-enforced (non-superuser,
+-- NOBYPASSRLS) sandbox: a raw `update orders set status='confirmed'` succeeded and reproduced the exact
+-- race 0019_stale_order_safety.sql exists to close.
+--
+-- This migration touches `orders` only. Other tables' "admin all" policy is left as-is: product,
+-- category, coupon and CMS writes are legitimately direct from admin UI code with no equivalent
+-- SECURITY DEFINER gate, and narrowing those is a separate review this migration does not attempt.
+drop policy if exists "admin all" on orders;
+create policy "admin read" on orders for select using (is_admin());
+-- No admin insert/update/delete policy is created on `orders`: create_order(), admin_set_order_status()
+-- and release_stale_orders() don't need one (SECURITY DEFINER bypasses RLS), and no other code writes to
+-- this table directly. The existing "own orders" customer SELECT policy (0001) is untouched.
