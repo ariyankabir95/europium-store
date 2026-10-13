@@ -3,6 +3,7 @@ import { requireAdmin, str } from "@/lib/admin";
 import { isEmail } from "@/lib/validate";
 import { back } from "@/lib/cms-admin";
 import Flash from "@/components/admin/Flash";
+import ConfirmButton from "@/components/admin/ConfirmButton";
 import { DEFAULT_SETTINGS, getSettings } from "@/lib/cms";
 import { sendEmail } from "@/lib/email";
 const HEX = /^#[0-9a-fA-F]{6}$/;
@@ -41,6 +42,19 @@ async function save(fd) {
     revalidatePath("/contact");
     revalidatePath("/checkout");
     back("/admin/settings", "ok", "Settings saved.");
+}
+async function resetAppearance() {
+    "use server";
+    const sb = await requireAdmin();
+    const { data: current, error: readError } = await sb.from("site_settings").select("value").eq("key", "general").maybeSingle();
+    if (readError) back("/admin/settings", "error", "Could not load current settings. Nothing was changed.");
+    const value = current?.value && typeof current.value === "object" ? current.value : {};
+    const next = { ...value, warm: DEFAULT_SETTINGS.warm, cream: DEFAULT_SETTINGS.cream, sand: DEFAULT_SETTINGS.sand, taupe: DEFAULT_SETTINGS.taupe, umber: DEFAULT_SETTINGS.umber, charcoal: DEFAULT_SETTINGS.charcoal, ink: DEFAULT_SETTINGS.ink, font_sans: DEFAULT_SETTINGS.font_sans, font_serif: DEFAULT_SETTINGS.font_serif, font_display: DEFAULT_SETTINGS.font_display };
+    if (next.theme && typeof next.theme === "object") next.theme = { ...next.theme, warm: DEFAULT_SETTINGS.warm, cream: DEFAULT_SETTINGS.cream, sand: DEFAULT_SETTINGS.sand, taupe: DEFAULT_SETTINGS.taupe, umber: DEFAULT_SETTINGS.umber, charcoal: DEFAULT_SETTINGS.charcoal, ink: DEFAULT_SETTINGS.ink, font_sans: DEFAULT_SETTINGS.font_sans, font_serif: DEFAULT_SETTINGS.font_serif, font_display: DEFAULT_SETTINGS.font_display };
+    const { error } = await sb.from("site_settings").upsert({ key: "general", value: next });
+    if (error) back("/admin/settings", "error", "Could not restore theme defaults. Other settings were not intentionally changed.");
+    revalidatePath("/", "layout");
+    back("/admin/settings", "ok", "Default colors and fonts restored. Store, payment, contact and ad settings were kept.");
 }
 async function sendTestEmail() {
     "use server";
@@ -113,6 +127,9 @@ export default async function Settings({ searchParams }) {
       <button formAction={sendTestEmail} className="btn-line min-h-11 px-4">Send test email</button>
       <p className="text-xs text-taupe">Testing uses the EMAIL_FROM value from .env.local. Do not put the Resend API key in the browser or GitHub.</p>
     </section>
-    <button className="btn-dark">Save settings</button>
+    <div className="flex flex-wrap items-center gap-3">
+      <button className="btn-dark">Save settings</button>
+      <form action={resetAppearance}><ConfirmButton message="Restore EUROPIUM's default colors and fonts? Store details, bKash settings and advertisement controls will be kept." className="btn-line min-h-11 px-4">Reset colors and fonts</ConfirmButton></form>
+    </div>
   </form></>);
 }
