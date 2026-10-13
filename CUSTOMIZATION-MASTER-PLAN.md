@@ -31,7 +31,7 @@
 ### C. Pages and SEO
 - [ ] Create/edit/draft/publish/unpublish pages and section content.
 - [ ] Manage slugs, SEO title/description, canonical URL and index visibility.
-- [ ] Prevent reserved-slug conflicts, unsafe canonical URLs and duplicate slugs.
+- [x] Prevent reserved-slug conflicts and duplicate slugs; canonical URLs are validated as HTTPS URLs without embedded credentials. Sitemap generation returns no URLs when `NEXT_PUBLIC_SITE_URL` is missing instead of emitting incorrect `example.com` links.
 - [ ] Ensure sitemap/robots/metadata only include intended public pages.
 - [ ] Create/edit essential policy pages (shipping, returns, FAQ, journal, privacy, terms) or ensure no dead footer links remain.
 
@@ -119,5 +119,6 @@
 - Opened PR #2 for CI verification; it is not merged and does not deploy production by itself.
 - GitHub Actions build passed at commit `571aaa5e`. The later theme-reset/settings-precedence changes triggered a fresh CI run; verify that run passes before merge.
 - Fixed legacy nested-theme precedence so current top-level admin color/font edits are not silently overridden by stale nested theme values.
+- Tightened CMS canonical URL validation to require valid HTTPS and removed the sitemap's `example.com` fallback when the canonical site URL is unset.
 - **Not yet verified:** browser rendering, live Supabase query permissions, rate-limit behavior against migration `0023`, and full checkout/email/admin workflows.
 - No production database, live orders, payment statuses, or deployment configuration was changed by this branch work.
