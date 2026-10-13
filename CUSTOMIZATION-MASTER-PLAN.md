@@ -107,7 +107,7 @@
 - Created isolated working branch `feature/complete-a-to-z-customization`.
 - Reviewed existing `AUDIT.md`, admin settings/navigation/orders, CMS schema, order creation SQL and color-specific image migration.
 - Updated `app/admin/orders/page.jsx` to query the latest 100 orders and their order items in a batched query, and display product/variant label, quantity, unit price, line total, shipping address, and tracking in expandable details.
-- Added `adsterra_social_bar_enabled` to default settings and Admin → Settings; the existing Social Bar script now respects that toggle. Default is enabled to preserve current behavior until the admin turns it off.
+- Added `adsterra_social_bar_enabled` to default settings and Admin → Settings; the existing Social Bar script now respects that toggle. Default is enabled to preserve current behavior until the admin turns it off. The script is now excluded from admin, account, cart, checkout, login, auth and wishlist routes to avoid interfering with transactional/admin workflows.
 - Confirmed `adsterra_native` already exists as a CMS section type, so Admin → Pages can add/hide/remove the Native Banner section without adding a second, competing control.
 - Added `0021_nested_navigation.sql`, parent selection in Admin → Navigation, same-menu/cycle validation, and nested desktop/mobile rendering. This migration has **not** been applied to production.
 - Updated Admin → Products to prevent deletion when order history exists and show visible errors for failed mutations.
