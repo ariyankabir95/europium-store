@@ -9,7 +9,8 @@ import { consumeRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const s = (v, max = 120) => String(v ?? "").trim().slice(0, max);
 const fail = (error, status) => NextResponse.json({ error }, { status });
-const DELIVERY_ZONES = new Set(["epz_local", "ashulia_bypail", "savar_outer"]);
+const DELIVERY_ZONE_LABELS = { epz_local: "Savar EPZ & nearby", ashulia_bypail: "Bypail & Ashulia", savar_outer: "Other selected Savar areas" };
+const DELIVERY_ZONES = new Set(Object.keys(DELIVERY_ZONE_LABELS));
 
 export async function POST(req) {
   if (!hasSupabase() || !process.env.SUPABASE_SERVICE_ROLE_KEY) return fail("Checkout is not available yet.", 503);
@@ -35,6 +36,7 @@ export async function POST(req) {
     postal_code: s(b.postalCode, 20),
     country: s(b.country),
     delivery_zone: deliveryZone,
+    delivery_zone_label: DELIVERY_ZONE_LABELS[deliveryZone] ?? "",
   };
   if (!isEmail(email) || Object.values(address).some((v) => !v)) return fail("Please complete every field with a valid email.", 400);
   if (address.country.toLowerCase() !== "bangladesh") return fail("EUROPIUM currently delivers only in selected areas of Bangladesh.", 400);
