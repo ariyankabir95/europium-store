@@ -14,8 +14,11 @@ export default async function AdminNavigation({ searchParams }) {
     const sb = await requireAdmin();
     const sp = await searchParams;
     const [menu, lookups, blocks] = await Promise.all([ensureMenu(sb, "header", "Header & mobile menu", { logo_text: "EUROPIUM" }), loadLookups(sb), getBlocks()]);
-    const { data } = menu ? await sb.from("navigation_items").select("id,label,link_type,link_target,open_new_tab,active").eq("menu_id", menu.id).order("sort", { ascending: true }).order("created_at", { ascending: true }) : { data: null };
+    const { data } = menu ? await sb.from("navigation_items").select("id,label,link_type,link_target,open_new_tab,active,parent_id").eq("menu_id", menu.id).order("sort", { ascending: true }).order("created_at", { ascending: true }) : { data: null };
     const items = (data ?? []);
+    const siblingIndex = (item) => items.filter((candidate) => (candidate.parent_id ?? null) === (item.parent_id ?? null)).findIndex((candidate) => candidate.id === item.id);
+    const siblingCount = (item) => items.filter((candidate) => (candidate.parent_id ?? null) === (item.parent_id ?? null)).length;
+    const parentOptions = (itemId = null) => items.filter((candidate) => candidate.id !== itemId).map((candidate) => [candidate.id, `${candidate.parent_id ? "↳ " : ""}${candidate.label}`]);
     const logo = String(menu?.settings.logo_text ?? "EUROPIUM");
     const ann = blocks.announcement;
     return (<>
@@ -45,6 +48,7 @@ export default async function AdminNavigation({ searchParams }) {
               <input type="hidden" name="id" value={it.id}/>
               <div><label htmlFor={`l-${it.id}`} className="mb-1 block text-sm">Label</label><input id={`l-${it.id}`} name="label" defaultValue={it.label} required maxLength={60} className={input}/></div>
               <LinkFields name="link" label="Link" type={it.link_type} target={it.link_target} options={lookups}/>
+              <div><label htmlFor={`parent-${it.id}`} className="mb-1 block text-sm">Parent item</label><select id={`parent-${it.id}`} name="parent_id" defaultValue={it.parent_id ?? ""} className={input}><option value="">Top-level item</option>{parentOptions(it.id).map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select><p className="mt-1 text-xs text-taupe">Choose a parent to make this a dropdown/submenu item.</p></div>
               <div className="flex flex-wrap items-center gap-5 md:col-span-2">
                 <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="active" defaultChecked={it.active} className="h-5 w-5"/>Visible</label>
                 <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="open_new_tab" defaultChecked={it.open_new_tab} className="h-5 w-5"/>Open in new tab</label>
@@ -52,8 +56,8 @@ export default async function AdminNavigation({ searchParams }) {
               </div>
             </form>
             <div className="mt-3 flex flex-wrap gap-2 border-t border-sand pt-3">
-              <Mini action={moveNavItem} id={it.id} dir="up" label="↑ Up" disabled={i === 0}/>
-              <Mini action={moveNavItem} id={it.id} dir="down" label="↓ Down" disabled={i === items.length - 1}/>
+              <Mini action={moveNavItem} id={it.id} dir="up" label="↑ Up" disabled={siblingIndex(it) === 0}/>
+              <Mini action={moveNavItem} id={it.id} dir="down" label="↓ Down" disabled={siblingIndex(it) === siblingCount(it) - 1}/>
               <form action={deleteNavItem}><input type="hidden" name="id" value={it.id}/><ConfirmButton message={`Delete the “${it.label}” menu item?`} className={`${sm} text-red-800`}>Delete</ConfirmButton></form>
             </div>
           </div>))}
@@ -64,6 +68,7 @@ export default async function AdminNavigation({ searchParams }) {
           <h3 className="font-serif text-2xl md:col-span-2">Add menu item</h3>
           <div><label htmlFor="new-label" className="mb-1 block text-sm">Label</label><input id="new-label" name="label" required maxLength={60} placeholder="New Arrivals" className={input}/></div>
           <LinkFields name="link" label="Link" options={lookups}/>
+          <div><label htmlFor="new-parent" className="mb-1 block text-sm">Parent item (optional)</label><select id="new-parent" name="parent_id" defaultValue="" className={input}><option value="">Top-level item</option>{parentOptions().map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select><p className="mt-1 text-xs text-taupe">Choose an existing item to create a submenu.</p></div>
           <input type="hidden" name="active" value="on"/>
           <label className="flex items-center gap-2 text-sm md:col-span-2"><input type="checkbox" name="open_new_tab" className="h-5 w-5"/>Open in new tab</label>
           <button className="btn-dark md:col-span-2 md:justify-self-start">Add menu item</button>
