@@ -29,6 +29,7 @@ async function save(fd) {
             store_name: str(fd, "store_name", 80) || DEFAULT_SETTINGS.store_name, contact_email: contactEmail, phone: str(fd, "phone", 40), instagram_url: instagramUrl,
             bkash_number: str(fd, "bkash_number", 40), bkash_instructions: str(fd, "bkash_instructions", 500),
             adsterra_social_bar_enabled: fd.get("adsterra_social_bar_enabled") === "on",
+            adsterra_native_enabled: fd.get("adsterra_native_enabled") === "on",
             warm: safeHex(str(fd, "warm", 20), DEFAULT_SETTINGS.warm), cream: safeHex(str(fd, "cream", 20), DEFAULT_SETTINGS.cream), sand: safeHex(str(fd, "sand", 20), DEFAULT_SETTINGS.sand),
             taupe: safeHex(str(fd, "taupe", 20), DEFAULT_SETTINGS.taupe), umber: safeHex(str(fd, "umber", 20), DEFAULT_SETTINGS.umber), charcoal: safeHex(str(fd, "charcoal", 20), DEFAULT_SETTINGS.charcoal), ink: safeHex(str(fd, "ink", 20), DEFAULT_SETTINGS.ink),
             font_sans: SANS.includes(str(fd, "font_sans")) ? str(fd, "font_sans") : DEFAULT_SETTINGS.font_sans,
@@ -120,6 +121,7 @@ export default async function Settings({ searchParams }) {
     <section className="space-y-3 border border-sand p-4">
       <h2 className="text-xs tracking-[0.18em] uppercase">Advertisement controls</h2>
       <label className="flex items-start gap-3 text-sm"><input type="checkbox" name="adsterra_social_bar_enabled" defaultChecked={s.adsterra_social_bar_enabled !== false} className="mt-1 h-5 w-5"/><span><strong>Enable Adsterra Social Bar</strong><span className="mt-1 block text-xs text-taupe">Turns the existing Social Bar script on or off across the storefront. This does not control other Adsterra units or native banner placements.</span></span></label>
+      <label className="flex items-start gap-3 text-sm"><input type="checkbox" name="adsterra_native_enabled" defaultChecked={s.adsterra_native_enabled !== false} className="mt-1 h-5 w-5"/><span><strong>Enable Adsterra Native Banner</strong><span className="mt-1 block text-xs text-taupe">Controls Native Banner sections added through Admin → Pages. Disabling this hides the placement without deleting its CMS section.</span></span></label>
     </section>
     <section className="space-y-3 border border-sand p-4">
       <h2 className="text-xs tracking-[0.18em] uppercase">Email test</h2>
