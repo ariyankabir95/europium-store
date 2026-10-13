@@ -5,6 +5,14 @@ import { sendOrderPlacedEmail, sendOrderStatusEmail, sendPaymentReceivedEmail } 
 import OrderStatusForm from "@/components/admin/OrderStatusForm";
 
 const STATUS = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled", "refunded"], PAY = ["unpaid", "paid", "failed", "refunded"];
+const STATUS_EMAIL_EVENT = {
+  confirmed: "order_confirmed",
+  processing: "order_processing",
+  shipped: "order_shipped",
+  delivered: "order_delivered",
+  cancelled: "order_cancelled",
+  refunded: "order_refunded",
+};
 
 // Mirrors the error.message.includes(...) mapping already used for RPC errors in app/api/checkout/route.js.
 function statusErrorMessage(error) {
@@ -71,6 +79,39 @@ async function retryOrderPlacedEmail(fd) {
   revalidatePath("/admin/orders");
 }
 
+async function retryCurrentStatusEmail(fd) {
+  "use server";
+  const sb = await requireAdmin();
+  const id = str(fd, "id");
+  if (!uuid(id)) return;
+
+  const { data: order, error: orderError } = await sb
+    .from("orders")
+    .select("id,status")
+    .eq("id", id)
+    .maybeSingle();
+  if (orderError || !order) return;
+
+  const eventType = STATUS_EMAIL_EVENT[order.status];
+  if (!eventType) return;
+
+  // Never bypass an existing claim: it may represent a successful or ambiguous provider send.
+  const { data: existing, error } = await sb
+    .from("order_email_events")
+    .select("id")
+    .eq("order_id", id)
+    .eq("event_type", eventType)
+    .maybeSingle();
+  if (error) {
+    console.error("[admin/orders] could not check status email event", error.code);
+    return;
+  }
+  if (existing) return;
+
+  await sendOrderStatusEmail(id, order.status);
+  revalidatePath("/admin/orders");
+}
+
 export default async function Orders() {
   const sb = await requireAdmin();
   const { data: orders, error } = await sb
@@ -112,6 +153,9 @@ export default async function Orders() {
           {orders.map((o) => {
             const items = itemsByOrder.get(o.id) ?? [];
             const address = displayAddress(o.shipping_address);
+            const orderEvents = emailEventsByOrder.get(o.id) ?? [];
+            const currentStatusEvent = STATUS_EMAIL_EVENT[o.status];
+            const hasCurrentStatusEvent = currentStatusEvent && orderEvents.some((event) => event.event_type === currentStatusEvent);
             return (
               <li key={o.id} className="py-5">
                 <p className="mb-2 font-medium">#{o.id.slice(0, 8)} · {o.email} · {money(o.total_cents / 100, "BDT")} · {new Date(o.created_at).toLocaleDateString("en-GB")}</p>
@@ -144,11 +188,11 @@ export default async function Orders() {
                     {o.tracking_number && <p className="border-t border-sand pt-3 text-xs">Tracking: {o.tracking_number}</p>}
                     <section className="border-t border-sand pt-3">
                       <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider">Transactional email events</h3>
-                      {!emailEventsByOrder.get(o.id)?.length ? (
+                      {!orderEvents.length ? (
                         <p className="text-xs text-taupe">No order email events recorded.</p>
                       ) : (
                         <ul className="space-y-2">
-                          {emailEventsByOrder.get(o.id).map((event) => {
+                          {orderEvents.map((event) => {
                             const labels = {
                               order_placed: "Order placed",
                               payment_received: "Payment received",
@@ -175,11 +219,19 @@ export default async function Orders() {
                           })}
                         </ul>
                       )}
-                      {!emailEventsByOrder.get(o.id)?.some((event) => event.event_type === "order_placed") && (
+                      {!orderEvents.some((event) => event.event_type === "order_placed") && (
                         <form action={retryOrderPlacedEmail} className="mt-3">
                           <input type="hidden" name="id" value={o.id} />
                           <button type="submit" className="border border-umber px-3 py-2 text-xs font-medium hover:bg-sand">
                             Send order confirmation email
+                          </button>
+                        </form>
+                      )}
+                      {currentStatusEvent && !hasCurrentStatusEvent && (
+                        <form action={retryCurrentStatusEmail} className="mt-3">
+                          <input type="hidden" name="id" value={o.id} />
+                          <button type="submit" className="border border-umber px-3 py-2 text-xs font-medium hover:bg-sand">
+                            Send missing “{o.status}” status email
                           </button>
                         </form>
                       )}
