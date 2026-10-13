@@ -36,7 +36,11 @@ export async function GET() {
     const c = await ctx();
     if (!c)
         return guest();
-    return NextResponse.json({ items: await readCart(c.sb, c.user.id) }, { headers: noStore });
+    try {
+        return NextResponse.json({ items: await readCart(c.sb, c.user.id) }, { headers: noStore });
+    } catch {
+        return NextResponse.json({ error: "We couldn\u0027t load your cart. Please try again." }, { status: 503, headers: noStore });
+    }
 }
 export async function POST(req) {
     const c = await ctx();
@@ -73,5 +77,9 @@ export async function POST(req) {
         if (error)
             return NextResponse.json({ error: "We couldn't update your cart. Please try again." }, { status: 500, headers: noStore });
     }
-    return NextResponse.json({ items: await readCart(sb, user.id) }, { headers: noStore });
+    try {
+        return NextResponse.json({ items: await readCart(sb, user.id) }, { headers: noStore });
+    } catch {
+        return NextResponse.json({ error: "Your cart may have been updated, but we couldn\u0027t reload it. Please refresh and check before retrying." }, { status: 503, headers: noStore });
+    }
 }
