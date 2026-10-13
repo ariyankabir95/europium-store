@@ -1,7 +1,7 @@
 import { getProducts, getCategories } from "@/lib/catalog";
 import { getSitemapPages } from "@/lib/cms-data";
 export default async function sitemap() {
-    const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\\/$/, "");
+    const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
     // Never publish example.com URLs into a real store sitemap when the canonical site URL is missing.
     if (!base) return [];
     const [products, categories, pages] = await Promise.all([getProducts(), getCategories(), getSitemapPages()]);
