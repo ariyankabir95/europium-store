@@ -37,7 +37,7 @@
 
 ### D. Header, navigation and footer
 - [ ] Edit logo text, announcement bar, menu labels/links, visibility and order.
-- [ ] Support nested menu/submenu hierarchy and mobile-friendly rendering.
+- [x] Add parent/child menu hierarchy, safe same-menu/cycle validation, and desktop/mobile nested rendering (requires migration `0021_nested_navigation.sql`).
 - [ ] Validate custom URLs and keep route/page/category/collection/product links consistent.
 - [ ] Edit footer columns, links, social links, newsletter content and contact details.
 
@@ -109,5 +109,7 @@
 - Updated `app/admin/orders/page.jsx` to query the latest 100 orders and their order items in a batched query, and display product/variant label, quantity, unit price, line total, shipping address, and tracking in expandable details.
 - Added `adsterra_social_bar_enabled` to default settings and Admin → Settings; the existing Social Bar script now respects that toggle. Default is enabled to preserve current behavior until the admin turns it off.
 - Confirmed `adsterra_native` already exists as a CMS section type, so Admin → Pages can add/hide/remove the Native Banner section without adding a second, competing control.
-- **Not yet verified:** CI/build, browser rendering, and live Supabase query permissions for the new order details UI and Social Bar toggle.
+- Added `0021_nested_navigation.sql`, parent selection in Admin → Navigation, same-menu/cycle validation, and nested desktop/mobile rendering. This migration has **not** been applied to production.
+- Opened PR #2 for CI verification; it is not merged and does not deploy production by itself.
+- **Not yet verified:** CI/build, browser rendering, and live Supabase query permissions for the new order details UI, Social Bar toggle and nested menus.
 - No production database, live orders, payment statuses, or deployment configuration was changed by this branch work.
