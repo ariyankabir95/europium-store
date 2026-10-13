@@ -9,7 +9,7 @@ import { money } from "@/lib/format";
 const fields = [["firstName", "First name"], ["lastName", "Last name"], ["email", "Email"], ["phone", "Phone"], ["line1", "Street address"], ["city", "City / area"], ["state", "District"], ["postalCode", "Postal code"], ["country", "Country"]];
 const deliveryZones = [
   { value: "epz_local", label: "Savar EPZ & nearby", description: "Local delivery", fee: 50 },
-  { value: "ashulia_bypail", label: "Bipayl & Ashulia", description: "Local delivery", fee: 70 },
+  { value: "ashulia_bypail", label: "Bypail & Ashulia", description: "Local delivery", fee: 70 },
   { value: "savar_outer", label: "Other selected Savar areas", description: "Savar / Nabinagar nearby", fee: 100 },
 ];
 
