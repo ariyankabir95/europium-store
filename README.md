@@ -21,7 +21,7 @@ npm run dev
 
 ## Supabase setup
 1. Create a project; put URL and anon key in `.env.local`. Keep the service role key server-only.
-2. Run migrations in order: `0001`–`0008`, then `0010`–`0024` (SQL editor or `supabase db push`), skipping only migrations already applied to this project. There is intentionally no `0009`. **`0012_fix_create_order.sql` is required**: without it, checkout fails for every order that has no coupon. Migration `0021_nested_navigation.sql` adds parent/child header menu support; `0022_category_hierarchy.sql` adds parent/child categories; `0023_public_rate_limits.sql` enables atomic rate limiting for contact, newsletter, reviews and checkout; `0024_reactivate_released_orders.sql` safely reserves stock if a released order is reactivated as pending. Apply migrations `0021`–`0024` to Supabase **before deploying code that uses these features**. `0002_seed.sql` adds demo products.
+2. Run migrations in order: `0001`–`0008`, then `0010`–`0025` (SQL editor or `supabase db push`), skipping only migrations already applied to this project. There is intentionally no `0009`. **`0012_fix_create_order.sql` is required**: without it, checkout fails for every order that has no coupon. Migration `0021_nested_navigation.sql` adds parent/child header menu support; `0022_category_hierarchy.sql` adds parent/child categories; `0023_public_rate_limits.sql` enables atomic rate limiting for contact, newsletter, reviews and checkout; `0024_reactivate_released_orders.sql` safely reserves stock if a released order is reactivated as pending; `0025_order_email_recovery.sql` adds persisted email payloads and Resend idempotency state for safe recovery. Apply migrations `0021`–`0025` to Supabase **before deploying code that uses these features**. `0002_seed.sql` adds demo products.
 3. Create Storage buckets `products`, `categories`, `lookbook` (public read, admin write).
 4. Sign up a user, then make them admin: `update profiles set role='admin' where id='<user uuid>';`
 
@@ -92,3 +92,18 @@ Run `supabase/migrations/0014_reviews_messages.sql` in Supabase after 0013. It i
 - **Messages**: statuses unread / read / replied (backfilled from `is_read`, which is kept in sync). Admin → Messages has filters and search; each message opens at `/admin/messages/[id]` with the full conversation. Replies live in `message_replies` and never overwrite the original. `reply_to_message()` saves the reply and marks the message replied in one transaction.
 - **Email**: no email provider is configured in this project (no Resend/SMTP/etc.), so replies are saved in the conversation but NOT emailed. The reply UI says so and offers an "Email this reply" mailto link. Connecting a provider is still required for automatic delivery.
 - **RLS**: unchanged for reviews. `message_replies` is admin-only. The anonymous `contact` insert policy now only allows `status = 'unread'` with no `replied_at`.
+
+
+## Recovering interrupted order emails (migration `0025_order_email_recovery.sql`)
+Order emails now persist the exact provider request payload and a deterministic Resend idempotency key before sending. The recovery route retries stale `sending` events with that same payload/key, so a process crash after provider acceptance can safely be retried during Resend's idempotency window. Automatic retries stop after 20 hours; older ambiguous events are marked `needs_review` instead of risking a duplicate. Existing legacy `sending` rows without a stored payload are also flagged for review once stale.
+
+Before deploying this code:
+1. Review and apply `supabase/migrations/0025_order_email_recovery.sql` after the earlier required migrations, first on a disposable Supabase project.
+2. Configure `CRON_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`, `NEXT_PUBLIC_SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY` on the hosting service. Keep secrets server-only.
+3. Create a separate Render Cron Job to call the recovery route every 5 minutes:
+   ```
+   curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://<your-render-service>.onrender.com/api/cron/retry-order-emails
+   ```
+   Use the same private `CRON_SECRET` environment value on the cron job and web service. The route is not scheduled automatically by adding code.
+4. Test a fresh order email, an interrupted/stale claim, two concurrent recovery calls, provider timeout, retry after a successful provider acceptance, and an event older than 20 hours. Confirm the old event becomes `needs_review` and is not auto-sent.
+5. Do not deploy until the disposable database tests and GitHub Actions build pass. The code change does not apply the migration or configure the Render Cron Job by itself.
