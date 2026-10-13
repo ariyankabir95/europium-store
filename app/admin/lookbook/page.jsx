@@ -1,4 +1,3 @@
-"use server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireAdmin, str, uuid } from "@/lib/admin";
@@ -8,6 +7,7 @@ const LIST = "/admin/lookbook";
 const back = (kind, message) => redirect(`${LIST}?${kind}=${encodeURIComponent(message)}`);
 
 async function act(fd) {
+  "use server";
   const sb = await requireAdmin();
   const id = str(fd, "lookbook_id"), op = str(fd, "op"), title = str(fd, "title", 200);
 
