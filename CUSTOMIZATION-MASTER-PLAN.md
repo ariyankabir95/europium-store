@@ -67,7 +67,7 @@
 ### H. Customer accounts and checkout
 - [ ] Verify profile, addresses, order history and order details are customer-scoped.
 - [ ] Verify checkout uses server-side prices, stock checks and coupon validation.
-- [x] Add atomic DB-backed rate limits for checkout, contact, newsletter and reviews (5 checkout/contact requests per 15 minutes; 3 newsletter signups/hour; 5 reviews/hour per signed-in user). Requires migration `0023_public_rate_limits.sql`; CAPTCHA and hosting-level IP throttling remain separate optional defenses.
+- [x] Add atomic DB-backed rate limits for checkout, contact, newsletter, reviews and customer support (5 checkout/contact requests per 15 minutes; 3 newsletter signups/hour; 5 reviews/hour per signed-in user; 3 new support tickets and 10 replies/hour per signed-in user). Requires migration `0023_public_rate_limits.sql`; CAPTCHA and hosting-level IP throttling remain separate optional defenses.
 - [ ] Verify cart/wishlist persistence behavior and document any local-only fallback.
 - [ ] Ensure checkout failures are understandable and do not leave inconsistent stock reservations.
 
@@ -111,7 +111,7 @@
 - Confirmed `adsterra_native` already exists as a CMS section type, so Admin → Pages can add/hide/remove the Native Banner section without adding a second, competing control.
 - Added `0021_nested_navigation.sql`, parent selection in Admin → Navigation, same-menu/cycle validation, and nested desktop/mobile rendering. This migration has **not** been applied to production.
 - Added `0022_category_hierarchy.sql`, parent selection in Admin → Categories, child-category links on category pages, and descendant-product inclusion. This migration has **not** been applied to production.
-- Added `0023_public_rate_limits.sql` and a server-only hashed-key limiter for checkout, contact, newsletter and product-review submissions; raw client IPs are not stored. Migration has **not** been applied to production.
+- Added `0023_public_rate_limits.sql` and a server-only hashed-key limiter for checkout, contact, newsletter, product-review and customer-support submissions; raw client IPs are not stored. Migration has **not** been applied to production.
 - Added `0024_reactivate_released_orders.sql` to re-reserve stock when an admin changes a released order back to pending. Migration has **not** been applied to production.
 - Updated Admin → Settings to validate contact email/Instagram URL and show save/test-email feedback; updated Admin → Lookbook to validate image/product/order input and show database errors.
 - Updated Admin → Products to prevent deletion when order history exists and show visible errors for failed mutations.
