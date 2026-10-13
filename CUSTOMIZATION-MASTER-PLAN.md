@@ -19,7 +19,7 @@
 ### A. Admin foundations
 - [ ] Verify every admin page and server action calls `requireAdmin()` or an equivalent authorization check.
 - [ ] Make admin errors understandable; avoid silent database failures.
-- [ ] Confirm loading, empty, success, failure and destructive-confirmation states.
+- [ ] Confirm loading, empty, success, failure and destructive-confirmation states. Product and lookbook mutations now show clearer validation/database errors; a full admin-wide audit remains.
 - [ ] Keep all private/admin pages out of search indexing.
 
 ### B. Homepage and CMS
@@ -42,7 +42,7 @@
 - [ ] Edit footer columns, links, social links, newsletter content and contact details.
 
 ### E. Theme and brand system
-- [ ] Admin-manage all supported theme colors and font choices.
+- [ ] Admin-manage all supported theme colors and font choices. Settings now validates contact email/Instagram URL and reports save/test-email success or failure.
 - [ ] Verify theme settings are applied consistently across storefront, buttons, cards, forms, menus and footer.
 - [ ] Keep EUROPIUM's warm neutral luxury-minimal identity as defaults.
 - [ ] Provide safe defaults for invalid or missing settings and a way to restore defaults.
@@ -67,7 +67,7 @@
 ### H. Customer accounts and checkout
 - [ ] Verify profile, addresses, order history and order details are customer-scoped.
 - [ ] Verify checkout uses server-side prices, stock checks and coupon validation.
-- [ ] Review rate limiting/abuse prevention for checkout and public submission endpoints.
+- [x] Add atomic DB-backed rate limits for checkout, contact, newsletter and reviews (5 checkout/contact requests per 15 minutes; 3 newsletter signups/hour; 5 reviews/hour per signed-in user). Requires migration `0023_public_rate_limits.sql`; CAPTCHA and hosting-level IP throttling remain separate optional defenses.
 - [ ] Verify cart/wishlist persistence behavior and document any local-only fallback.
 - [ ] Ensure checkout failures are understandable and do not leave inconsistent stock reservations.
 
@@ -92,12 +92,12 @@
 
 ## Known items from the existing repository audit
 
-- Rate limiting/CAPTCHA is not implemented for checkout, contact, newsletter and reviews.
+- CAPTCHA and host-level IP throttling are not configured; the application-level database limiter for checkout, contact, newsletter and reviews requires migration `0023_public_rate_limits.sql`.
 - Product retrieval currently loads the full catalog and reviews into the client store; evaluate pagination/caching before catalog growth.
 - No lockfile was present in the earlier audit; ensure the CI environment installs reproducibly and commit a lockfile only when it can be generated and verified.
 - Some footer destinations (shipping, returns, FAQ, journal, privacy, terms) may be dead links unless matching CMS pages exist.
 - Product `sold` count may not be updated, affecting best-seller ordering.
-- Deleting products with order history can fail due to foreign keys without a clear admin explanation.
+- Product deletion now checks order history first and shows an actionable message to unpublish instead.
 - Re-activating cancelled orders may not re-reserve stock.
 - Production schema already includes migrations through 0020 per the project's recent manual verification; confirm against the actual Supabase project before any future migration.
 
@@ -111,8 +111,11 @@
 - Confirmed `adsterra_native` already exists as a CMS section type, so Admin → Pages can add/hide/remove the Native Banner section without adding a second, competing control.
 - Added `0021_nested_navigation.sql`, parent selection in Admin → Navigation, same-menu/cycle validation, and nested desktop/mobile rendering. This migration has **not** been applied to production.
 - Added `0022_category_hierarchy.sql`, parent selection in Admin → Categories, child-category links on category pages, and descendant-product inclusion. This migration has **not** been applied to production.
+- Added `0023_public_rate_limits.sql` and a server-only hashed-key limiter for checkout, contact, newsletter and product-review submissions; raw client IPs are not stored. Migration has **not** been applied to production.
+- Updated Admin → Settings to validate contact email/Instagram URL and show save/test-email feedback; updated Admin → Lookbook to validate image/product/order input and show database errors.
 - Updated Admin → Products to prevent deletion when order history exists and show visible errors for failed mutations.
 - Added search and 50-row pagination to Admin → Inventory, plus visible update/load errors.
 - Opened PR #2 for CI verification; it is not merged and does not deploy production by itself.
-- **Not yet verified:** latest CI/build, browser rendering, and live Supabase query permissions for the new order details UI, Social Bar toggle and nested menus.
+- GitHub Actions build passed for the latest code at commit `d22db57c`; later rate-limit/settings/lookbook edits have triggered fresh CI runs and must pass before merge.
+- **Not yet verified:** browser rendering, live Supabase query permissions, rate-limit behavior against migration `0023`, and full checkout/email/admin workflows.
 - No production database, live orders, payment statuses, or deployment configuration was changed by this branch work.
