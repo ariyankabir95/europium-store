@@ -107,5 +107,7 @@
 - Created isolated working branch `feature/complete-a-to-z-customization`.
 - Reviewed existing `AUDIT.md`, admin settings/navigation/orders, CMS schema, order creation SQL and color-specific image migration.
 - Updated `app/admin/orders/page.jsx` to query the latest 100 orders and their order items in a batched query, and display product/variant label, quantity, unit price, line total, shipping address, and tracking in expandable details.
-- **Not yet verified:** CI/build, browser rendering, and live Supabase query permissions for the new order details UI.
+- Added `adsterra_social_bar_enabled` to default settings and Admin → Settings; the existing Social Bar script now respects that toggle. Default is enabled to preserve current behavior until the admin turns it off.
+- Confirmed `adsterra_native` already exists as a CMS section type, so Admin → Pages can add/hide/remove the Native Banner section without adding a second, competing control.
+- **Not yet verified:** CI/build, browser rendering, and live Supabase query permissions for the new order details UI and Social Bar toggle.
 - No production database, live orders, payment statuses, or deployment configuration was changed by this branch work.
