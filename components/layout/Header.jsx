@@ -11,6 +11,38 @@ function NavAnchor({ n, className, onClick }) {
         return <a href={n.href} onClick={onClick} className={className} {...(n.newTab || /^https?:/i.test(n.href) ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{n.label}</a>;
     return <Link href={n.href} onClick={onClick} className={className}>{n.label}</Link>;
 }
+function DesktopNavItem({ n, depth = 0 }) {
+    const children = Array.isArray(n.children) ? n.children : [];
+    if (!children.length) {
+        return <NavAnchor n={n} className={depth === 0 ? "underline-offset-8 hover:underline" : "block whitespace-nowrap px-4 py-3 hover:bg-cream"}/>;
+    }
+    return (
+      <div className="group relative">
+        <div className={`flex items-center gap-2 ${depth === 0 ? "" : "justify-between px-4 py-3 hover:bg-cream"}`}>
+          <NavAnchor n={n} className={depth === 0 ? "underline-offset-8 hover:underline" : "flex-1 whitespace-nowrap"}/>
+          <span aria-hidden="true" className="text-[10px]">{depth === 0 ? "⌄" : "›"}</span>
+        </div>
+        <div className={`absolute z-50 hidden min-w-48 border border-sand bg-warm py-1 text-charcoal shadow-lg group-hover:block group-focus-within:block ${depth === 0 ? "left-0 top-full" : "left-full top-0"}`}>
+          {children.map((child) => <DesktopNavItem key={child.id} n={child} depth={depth + 1}/>)}
+        </div>
+      </div>
+    );
+}
+function MobileNavItem({ n, onClick, depth = 0 }) {
+    const className = depth === 0
+        ? "py-4 font-serif text-3xl"
+        : depth === 1
+            ? "py-3 pl-6 text-xl"
+            : depth === 2
+                ? "py-2 pl-10 text-lg"
+                : "py-2 pl-12 text-base";
+    return (
+      <>
+        <NavAnchor n={n} onClick={onClick} className={className}/>
+        {(n.children ?? []).map((child) => <MobileNavItem key={child.id} n={child} onClick={onClick} depth={depth + 1}/>)}
+      </>
+    );
+}
 /*
  * Themed currency selector. The native <select> is kept (so the OS picker still works on mobile and the BDT/USD
  * switching is untouched), but its browser chrome is reset (appearance-none) and every state is styled from the
@@ -45,7 +77,7 @@ export default function Header({ overlay = false, bar }) {
       <div className="container-site flex h-16 items-center justify-between md:h-20">
         <Link href="/" className="font-display text-2xl tracking-[0.25em]">{logoText}</Link>
         <nav aria-label="Primary" className="hidden gap-8 text-xs tracking-[0.18em] uppercase lg:flex">
-          {items.map((n) => <NavAnchor key={n.id} n={n} className="underline-offset-8 hover:underline"/>)}
+          {items.map((n) => <DesktopNavItem key={n.id} n={n}/>)}
         </nav>
         <div className="flex items-center gap-1 text-xs tracking-[0.12em] uppercase">
           {icons.map(([l, h]) => <Link key={l} href={h} className={`min-h-11 items-center px-2 ${l === "Search" || l === "Cart" ? "flex" : "hidden lg:flex"}`}>{l}{l === "Cart" && count > 0 ? ` (${count})` : ""}{l === "Wishlist" && wish.length > 0 ? ` (${wish.length})` : ""}</Link>)}
@@ -56,7 +88,7 @@ export default function Header({ overlay = false, bar }) {
       <div id="drawer" className={`fixed inset-0 z-50 bg-warm text-charcoal transition-transform duration-300 lg:hidden ${open ? "translate-x-0" : "invisible translate-x-full"}`} aria-hidden={!open}>
         <div className="container-site flex h-16 items-center justify-between"><span className="font-display text-2xl tracking-[0.25em]">{logoText}</span><button className="min-h-11 px-2 text-xs uppercase tracking-[0.12em]" onClick={() => setOpen(false)}>Close</button></div>
         <nav aria-label="Mobile" className="container-site flex flex-col divide-y divide-sand">
-          {items.map((n) => <NavAnchor key={n.id} n={n} onClick={() => setOpen(false)} className="py-4 font-serif text-3xl"/>)}
+          {items.map((n) => <MobileNavItem key={n.id} n={n} onClick={() => setOpen(false)}/>)}
           {[["Wishlist", "/wishlist"], ["Account", "/account"]].map(([l, h]) => <Link key={l} href={h} onClick={() => setOpen(false)} className="py-4 font-serif text-3xl">{l}</Link>)}
           <div className="flex items-center justify-between py-4"><span className="text-xs uppercase tracking-[0.18em] text-umber">Currency</span><CurrencySelect currency={currency} onChange={setCurrency} tone="panel" className="[&>select]:min-h-11"/></div>
         </nav>
