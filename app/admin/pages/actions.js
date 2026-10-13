@@ -46,9 +46,18 @@ export async function updatePage(fd) {
     if (bad)
         back(edit(id), "error", bad);
     const canonicalRaw = str(fd, "canonical_url", 300);
-    const canonical = canonicalRaw ? (/^https?:\/\//i.test(canonicalRaw) ? safeUrl(canonicalRaw) : null) : "";
-    if (canonical === null)
-        back(edit(id), "error", "Canonical URL must start with https:// (or leave it empty).");
+    let canonical = "";
+    if (canonicalRaw) {
+        try {
+            const parsed = new URL(canonicalRaw);
+            if (parsed.protocol !== "https:" || !parsed.hostname || parsed.username || parsed.password)
+                throw new Error("invalid canonical");
+            parsed.hash = "";
+            canonical = parsed.toString();
+        } catch {
+            back(edit(id), "error", "Canonical URL must be a valid HTTPS URL without credentials (or leave it empty).");
+        }
+    }
     const { error } = await sb.from("pages").update({
         title, slug,
         seo_title: str(fd, "seo_title", 160) || null,
