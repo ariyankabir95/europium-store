@@ -58,14 +58,14 @@ const galleryImages = p.colorImages?.[color]?.length
         <h1 className="font-display text-4xl md:text-5xl">{p.name}</h1>
         <p className="mt-2 text-sm text-taupe">★ {p.rating.toFixed(1)} ({p.reviewCount} reviews)</p>
         <p className="mt-4 flex gap-3 text-xl">{p.salePrice ? (<><span>{money(p.salePrice, currency)}</span><span className="text-taupe line-through">{money(p.price, currency)}</span><span className="text-umber">−{discount(p.price, p.salePrice)}%</span></>) : money(p.price, currency)}</p>
-        <p className="mt-6 text-umber">{p.description}</p>
+        <p className="mt-6 whitespace-pre-wrap text-umber">{p.description}</p>
         <fieldset className="mt-8"><legend className="mb-2 text-xs tracking-[0.18em] uppercase">Size</legend><div className="flex gap-2">{p.sizes.map((s) => { const d = sizeDisabled(s); return <button key={s} disabled={d} aria-pressed={size === s} aria-disabled={d} onClick={() => pickSize(s)} className={chip(size === s, d)}>{s}</button>; })}</div></fieldset>
         <fieldset className="mt-6"><legend className="mb-2 text-xs tracking-[0.18em] uppercase">Color: {color}</legend><div className="flex gap-2">{p.colors.map((c) => { const d = colorDisabled(c.name); return <button key={c.name} disabled={d} aria-label={c.name} aria-pressed={color === c.name} aria-disabled={d} onClick={() => pickColor(c.name)} style={{ background: c.hex }} className={`h-11 w-11 border-2 ${color === c.name ? "border-charcoal" : "border-sand"} ${d ? "cursor-not-allowed opacity-30" : ""}`}/>; })}</div></fieldset>
         <div className="mt-6 flex items-center gap-3"><label htmlFor="qty" className="text-xs tracking-[0.18em] uppercase">Quantity</label><input id="qty" type="number" min={1} max={10} value={qty} onChange={(e) => setQty(Math.max(1, Math.min(10, +e.target.value || 1)))} className="min-h-11 w-20 border border-sand bg-transparent px-3"/></div>
         {p.inStock === false && <p className="mt-6 text-sm text-red-800">Currently out of stock.</p>}<div className="mt-8 flex gap-3"><button onClick={() => { void submit(); }} disabled={!canAdd} className="btn-dark flex-1">Add to cart</button><button onClick={() => toggleWish(p.id)} aria-pressed={wish.includes(p.id)} className="btn-line">{wish.includes(p.id) ? "Saved" : "Save"}</button></div>
         <p role="status" className="mt-3 min-h-5 text-sm text-umber">{msg}</p>
         <div className="mt-8 divide-y divide-sand border-y border-sand text-sm">
-          {[["Materials", p.materials], ["Care", p.care], ["Shipping", `Free shipping over ${money(FREE_SHIPPING_MIN_BDT, currency)}. Otherwise ${money(SHIPPING_FEE_BDT, currency)}.`], ["Returns", "Free returns within 30 days on unworn items."]].map(([t, b]) => <details key={t} className="py-4"><summary className="cursor-pointer text-xs tracking-[0.18em] uppercase">{t}</summary><p className="mt-3 text-umber">{b}</p></details>)}
+          {[['Materials', p.materials], ['Care', p.care], ['Shipping', `Free shipping over ${money(FREE_SHIPPING_MIN_BDT, currency)}. Otherwise ${money(SHIPPING_FEE_BDT, currency)}.`], ['Returns', 'Free returns within 30 days on unworn items.']].map(([t, b]) => <details key={t} className="py-4"><summary className="cursor-pointer text-xs tracking-[0.18em] uppercase">{t}</summary><p className="mt-3 text-umber">{b}</p></details>)}
         </div>
       </div>
     </div>);
