@@ -21,7 +21,7 @@ npm run dev
 
 ## Supabase setup
 1. Create a project; put URL and anon key in `.env.local`. Keep the service role key server-only.
-2. Run ALL migrations in order: `0001` … `0008`, `0010`, `0011`, then `0012_fix_create_order.sql` (SQL editor or `supabase db push`). There is intentionally no `0009`. **`0012` is required**: without it, checkout fails for every order that has no coupon. `0002_seed.sql` adds demo products.
+2. Run migrations in order: `0001`–`0008`, then `0010`–`0021` (SQL editor or `supabase db push`), skipping only migrations already applied to this project. There is intentionally no `0009`. **`0012_fix_create_order.sql` is required**: without it, checkout fails for every order that has no coupon. Migration `0021_nested_navigation.sql` adds the `parent_id` column and cycle/same-menu validation for nested header menus. Apply it to Supabase **before deploying code that uses submenu controls**. `0002_seed.sql` adds demo products.
 3. Create Storage buckets `products`, `categories`, `lookbook` (public read, admin write).
 4. Sign up a user, then make them admin: `update profiles set role='admin' where id='<user uuid>';`
 
@@ -38,7 +38,9 @@ Run `supabase/migrations/0011_cms.sql` after the earlier migrations. It only **a
 - **Admin → Pages**: create/edit/delete pages, publish/unpublish (draft = 404 publicly, admins can preview), hide/show (live but unlisted: noindex, kept out of the sitemap), slug, SEO title/description/canonical. Pages render at `/<slug>` from the database (`app/[slug]/page.tsx`), no new files needed per page. Static routes (`/shop`, `/sale`, `/contact`, `/about`, ...) always win, and those slugs are reserved.
 - **Page builder**: sections Hero, Text, Image + Text, Image, Product Grid, Featured Products, Category Grid, Collection Grid, Promo Banner, Rich Text, CTA, Newsletter, Spacer. Add, edit, delete, reorder (up/down), hide/show. Section types and fields are defined once in `lib/cms-schema.ts`; renderers are in `components/cms/`.
 - **Homepage**: the page flagged `is_home` (Admin → Homepage opens it). If CMS data is missing or has no visible sections, the original built-in homepage (`components/sections/LegacyHome.tsx`) renders.
-- **Admin → Navigation**: header + mobile menu items (same data), logo text, announcement bar. **Admin → Footer**: columns, links, bottom row (Privacy/Terms), brand text, copyright. Built-in fallbacks (`lib/cms-fallback.ts`) are used if CMS data is unavailable.
+- **Admin → Navigation**: header + mobile menu items (same data), logo text, announcement bar, and parent-item selection for nested dropdown/submenu links. Nested menus require migration `0021_nested_navigation.sql`. **Admin → Footer**: columns, links, bottom row (Privacy/Terms), brand text, copyright. Built-in fallbacks (`lib/cms-fallback.ts`) are used if CMS data is unavailable.
+- **Admin → Orders**: expandable order details show purchased items, quantities, unit prices, line totals, shipping address and tracking.
+- **Admin → Settings → Advertisement controls**: toggle the existing Adsterra Social Bar script on/off. Native Banner is added/hidden/deleted as a CMS section through Admin → Pages. The toggle preserves the current Social Bar enabled state by default.
 - **Links** use a type + target picker (Store page, CMS page, Category, Collection, Product, Custom URL). CMS-page links store the page id, so changing a slug does not break menus. Custom URLs are validated (`/path`, `#`, `https://`, `mailto:`, `tel:`).
 - Footer links to `/shipping`, `/returns`, `/faq`, `/journal`, `/privacy`, `/terms` were already dead links before the CMS. Create CMS pages with those slugs to make them work.
 
