@@ -1,5 +1,8 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin, str } from "@/lib/admin";
+import { isEmail } from "@/lib/validate";
+import { back } from "@/lib/cms-admin";
+import Flash from "@/components/admin/Flash";
 import { DEFAULT_SETTINGS, getSettings } from "@/lib/cms";
 import { sendEmail } from "@/lib/email";
 const HEX = /^#[0-9a-fA-F]{6}$/;
@@ -9,8 +12,20 @@ const SERIF = ["georgia", "times", "system"];
 async function save(fd) {
     "use server";
     const sb = await requireAdmin();
-    await sb.from("site_settings").upsert({ key: "general", value: {
-            store_name: str(fd, "store_name", 80) || DEFAULT_SETTINGS.store_name, contact_email: str(fd, "contact_email", 254), phone: str(fd, "phone", 40), instagram_url: str(fd, "instagram_url", 300),
+    const contactEmail = str(fd, "contact_email", 254);
+    if (contactEmail && !isEmail(contactEmail))
+        back("/admin/settings", "error", "Enter a valid contact email address.");
+    const instagramUrl = str(fd, "instagram_url", 300);
+    if (instagramUrl) {
+        let valid = false;
+        try {
+            const parsed = new URL(instagramUrl);
+            valid = parsed.protocol === "https:" && ["instagram.com", "www.instagram.com"].includes(parsed.hostname.toLowerCase());
+        } catch {}
+        if (!valid) back("/admin/settings", "error", "Instagram URL must be a valid https://instagram.com link.");
+    }
+    const { error } = await sb.from("site_settings").upsert({ key: "general", value: {
+            store_name: str(fd, "store_name", 80) || DEFAULT_SETTINGS.store_name, contact_email: contactEmail, phone: str(fd, "phone", 40), instagram_url: instagramUrl,
             bkash_number: str(fd, "bkash_number", 40), bkash_instructions: str(fd, "bkash_instructions", 500),
             adsterra_social_bar_enabled: fd.get("adsterra_social_bar_enabled") === "on",
             warm: safeHex(str(fd, "warm", 20), DEFAULT_SETTINGS.warm), cream: safeHex(str(fd, "cream", 20), DEFAULT_SETTINGS.cream), sand: safeHex(str(fd, "sand", 20), DEFAULT_SETTINGS.sand),
@@ -21,16 +36,18 @@ async function save(fd) {
                 : DEFAULT_SETTINGS.font_display,
             font_serif: SERIF.includes(str(fd, "font_serif")) ? str(fd, "font_serif") : DEFAULT_SETTINGS.font_serif,
         } });
+    if (error) back("/admin/settings", "error", "Could not save settings. Check the database and try again.");
     revalidatePath("/", "layout");
     revalidatePath("/contact");
     revalidatePath("/checkout");
+    back("/admin/settings", "ok", "Settings saved.");
 }
 async function sendTestEmail() {
     "use server";
     const sb = await requireAdmin();
     const { data: { user } } = await sb.auth.getUser();
     if (!user?.email)
-        throw new Error("Your admin account has no email address.");
+        back("/admin/settings", "error", "Your admin account has no email address.");
     const result = await sendEmail({
         to: user.email,
         subject: "Europium email test",
@@ -38,14 +55,16 @@ async function sendTestEmail() {
         html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:32px"><h1 style="margin:0 0 16px">Europium</h1><p>Your Resend email setup is working.</p><p style="color:#666;font-size:14px">This is a test email sent from the Europium admin panel.</p></div>`,
     });
     if (!result.ok)
-        throw new Error(result.error);
+        back("/admin/settings", "error", "Test email could not be sent. Check Resend and EMAIL_FROM settings.");
+    back("/admin/settings", "ok", "Test email sent to your admin email address.");
 }
 const input = "min-h-11 w-full border border-sand bg-transparent px-3";
 const colors = [["warm", "Background"], ["cream", "Surface"], ["sand", "Border"], ["taupe", "Muted"], ["umber", "Secondary text"], ["charcoal", "Primary"], ["ink", "Primary hover"]];
-export default async function Settings() {
+export default async function Settings({ searchParams }) {
     await requireAdmin();
+    const sp = await searchParams;
     const s = await getSettings();
-    return (<><h1 className="mb-6 font-serif text-4xl">Settings</h1><form action={save} className="max-w-2xl space-y-8">
+    return (<><h1 className="mb-3 font-serif text-4xl">Settings</h1><Flash ok={sp.ok} error={sp.error}/><form action={save} className="max-w-2xl space-y-8">
     <section className="space-y-4"><h2 className="text-xs tracking-[0.18em] uppercase">Store</h2>{[['store_name', 'Store name'], ['contact_email', 'Contact email'], ['phone', 'Phone'], ['instagram_url', 'Instagram URL']].map(([k, l]) => <div key={k}><label htmlFor={k} className="mb-1 block text-sm">{l}</label><input id={k} name={k} defaultValue={s[k]} className={input}/></div>)}</section>
     <section className="space-y-4"><h2 className="text-xs tracking-[0.18em] uppercase">Theme</h2><div className="grid gap-4 sm:grid-cols-2">{colors.map(([k, l]) => <div key={k} className="flex items-center gap-3 border border-sand p-3"><input type="color" id={k} name={k} defaultValue={s[k]} className="h-11 w-14 shrink-0 cursor-pointer bg-transparent"/><div><label htmlFor={k} className="block text-sm">{l}</label><p className="text-xs text-taupe">{s[k]}</p></div></div>)}</div><div className="grid gap-4 sm:grid-cols-3">
   <div>
