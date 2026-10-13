@@ -49,7 +49,7 @@
 
 ### F. Products, images, variants and categories
 - [ ] Manage product copy, SEO fields, category, tags, badges, pricing and publication.
-- [ ] Manage product image gallery order, alt text, primary image and per-color images.
+- [x] Manage product image gallery order, alt text, primary image and per-color images in Admin; color-specific storefront galleries now preserve the configured image order.
 - [ ] Manage variant size/color/SKU/stock/low-stock threshold/active state without corrupting reserved stock.
 - [x] Manage category and collection pages, product assignments, visibility and ordering. Added parent/child categories and descendant product inclusion; requires migration `0022_category_hierarchy.sql`.
 - [ ] Prevent unsafe product deletion when order history exists; show an actionable error or archive instead.
@@ -123,5 +123,6 @@
 - **Not yet verified:** browser rendering, live Supabase query permissions, rate-limit behavior against migration `0023`, and full checkout/email/admin workflows.
 - Added `adsterra_native_enabled` to default settings and made CMS Native Banner sections respect the Admin → Settings toggle; existing behavior stays enabled by default.
 - Fixed the invalid nested form around the appearance-reset confirmation by extending the shared `ConfirmButton` to accept `formAction` and targeting the reset server action directly.
+- Fixed color-specific product gallery ordering: variant/color images are now sorted by their saved gallery order before being mapped to the selected color on the product page.
 - GitHub Actions build verification passed for the latest code at commit `db1dd81a3479aaa62cb065841d40e275eda2bc49`; subsequent commits were also individually green through run `38334350745` at the time of the check.
 - No production database, live orders, payment statuses, or deployment configuration was changed by this branch work.
