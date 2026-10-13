@@ -5,6 +5,7 @@ import { isEmail } from "@/lib/validate";
 import { paymentProvider } from "@/lib/payment";
 import { readCart } from "@/lib/cart-server";
 import { sendOrderPlacedEmail } from "@/lib/email";
+import { consumeRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 const s = (v, max = 120) => String(v ?? "").trim().slice(0, max);
 const fail = (error, status) => NextResponse.json({ error }, { status });
 export async function POST(req) {
@@ -15,6 +16,9 @@ export async function POST(req) {
     const { data: { user } } = await sb.auth.getUser();
     if (!user)
         return fail("Please sign in or create an account to check out.", 401);
+    const limited = await consumeRateLimit(req, "checkout", { limit: 5, windowSeconds: 900, identifier: user.id });
+    const limitResponse = rateLimitResponse(NextResponse, limited);
+    if (limitResponse) return limitResponse;
     const b = await req.json().catch(() => null);
     if (!b)
         return fail("Invalid request.", 400);
