@@ -135,8 +135,9 @@ async function retryCurrentStatusEmail(fd) {
   revalidatePath("/admin/orders");
 }
 
-export default async function Orders() {
+export default async function Orders({ searchParams }) {
   const sb = await requireAdmin();
+  const sp = await searchParams;
   const { data: orders, error } = await sb
     .from("orders")
     .select("id,email,status,payment_status,payment_method,payment_reference,tracking_number,total_cents,created_at,shipping_address")
@@ -168,7 +169,7 @@ export default async function Orders() {
   return (
     <>
       <h1 className="mb-2 font-serif text-4xl">Orders</h1>
-      <Flash ok={undefined} error={undefined} />
+      <Flash ok={sp?.ok} error={sp?.error} />
       <p className="mb-3 text-sm text-taupe">Latest 100 active orders. Open “Order details” to see products, quantities, prices and shipping information.</p>
       <p className="mb-6 text-sm"><a href="/admin/trash" className="underline">View Trash / restore items</a></p>
       {error && <p role="alert" className="mb-4 border border-red-800 p-3 text-sm text-red-800">Could not load orders. Please refresh or check the server logs.</p>}
