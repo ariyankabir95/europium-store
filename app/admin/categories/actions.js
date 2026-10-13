@@ -4,6 +4,16 @@ import { back, refreshStorefront } from "@/lib/cms-admin";
 import { removeStoredImageIfUnused, uploadEntityImage } from "@/lib/storage";
 const PATH = "/admin/categories";
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+async function readParent(sb, raw, currentId = null) {
+    const parentId = String(raw ?? "").trim();
+    if (!parentId) return null;
+    if (!uuid(parentId) || parentId === currentId)
+        back(PATH, "error", "Choose a valid parent category other than this category.");
+    const { data, error } = await sb.from("categories").select("id").eq("id", parentId).maybeSingle();
+    if (error || !data)
+        back(PATH, "error", "The selected parent category could not be found.");
+    return parentId;
+}
 export async function createCategory(fd) {
     const sb = await requireAdmin();
     const name = str(fd, "name", 120), slug = str(fd, "slug", 120).toLowerCase();
@@ -11,8 +21,9 @@ export async function createCategory(fd) {
         back(PATH, "error", "Enter a category name.");
     if (!SLUG.test(slug))
         back(PATH, "error", "Slug must use lowercase letters, numbers and single hyphens (for example casual-wear).");
+    const parent_id = await readParent(sb, fd.get("parent_id"));
     const { data, error } = await sb.from("categories").insert({
-        name, slug, description: str(fd, "description", 1000),
+        name, slug, parent_id, description: str(fd, "description", 1000),
         seo_title: str(fd, "seo_title", 120) || null, seo_description: str(fd, "seo_description", 300) || null,
         published: fd.get("published") === "on",
     }).select("id").single();
@@ -42,17 +53,20 @@ export async function saveCategory(fd) {
         back(PATH, "error", "Category not found.");
     if (!name)
         back(PATH, "error", "Category name cannot be empty.");
-    const { data: cur } = await sb.from("categories").select("image_url").eq("id", id).maybeSingle();
+    const { data: cur } = await sb.from("categories").select("image_url,parent_id").eq("id", id).maybeSingle();
     if (!cur)
         back(PATH, "error", "Category not found.");
+    const parent_id = await readParent(sb, fd.get("parent_id"), id);
     // Text fields are saved first and NEVER include image_url, so a failed upload cannot erase the existing image.
     const { error } = await sb.from("categories").update({
-        name, description: str(fd, "description", 1000),
+        name, parent_id, description: str(fd, "description", 1000),
         seo_title: str(fd, "seo_title", 120) || null, seo_description: str(fd, "seo_description", 300) || null,
         published: fd.get("published") === "on",
     }).eq("id", id);
-    if (error)
-        back(PATH, "error", "Could not save the category.");
+    if (error) {
+        const message = String(error.message ?? "");
+        back(PATH, "error", message.includes("category_parent_cycle") ? "That parent choice would create a category loop. Choose a different parent." : "Could not save the category.");
+    }
     const old = cur.image_url;
     const up = await uploadEntityImage(sb, "categories", id, fd.get("image"));
     if (up.status === "error") {
