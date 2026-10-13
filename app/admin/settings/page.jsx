@@ -131,7 +131,7 @@ export default async function Settings({ searchParams }) {
     </section>
     <div className="flex flex-wrap items-center gap-3">
       <button className="btn-dark">Save settings</button>
-      <form action={resetAppearance}><ConfirmButton message="Restore EUROPIUM's default colors and fonts? Store details, bKash settings and advertisement controls will be kept." className="btn-line min-h-11 px-4">Reset colors and fonts</ConfirmButton></form>
+      <ConfirmButton formAction={resetAppearance} message="Restore EUROPIUM's default colors and fonts? Store details, bKash settings and advertisement controls will be kept." className="btn-line min-h-11 px-4">Reset colors and fonts</ConfirmButton>
     </div>
   </form></>);
 }
