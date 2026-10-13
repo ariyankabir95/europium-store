@@ -3,6 +3,9 @@ import { requireAdmin, str, uuid } from "@/lib/admin";
 import { money } from "@/lib/format";
 import { sendOrderPlacedEmail, sendOrderStatusEmail, sendPaymentReceivedEmail } from "@/lib/email";
 import OrderStatusForm from "@/components/admin/OrderStatusForm";
+import ConfirmButton from "@/components/admin/ConfirmButton";
+import Flash from "@/components/admin/Flash";
+import { back } from "@/lib/cms-admin";
 
 const STATUS = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled", "refunded"], PAY = ["unpaid", "paid", "failed", "refunded"];
 const STATUS_EMAIL_EVENT = {
@@ -51,6 +54,26 @@ async function update(prevState, fd) {
     if (before.status !== after.status) await sendOrderStatusEmail(id, after.status);
   }
   return { error: null };
+}
+
+async function trashOrder(fd) {
+  "use server";
+  const sb = await requireAdmin();
+  const id = str(fd, "id");
+  if (!uuid(id)) back("/admin/orders", "error", "Invalid order ID.");
+
+  const { error } = await sb.rpc("admin_set_order_trashed", { p_order: id, p_trashed: true });
+  if (error) {
+    console.error("[admin/orders] trash action failed", error.code);
+    const message = error.message?.includes("order_not_trashable")
+      ? "This order cannot be trashed because it may be paid or already in fulfillment. Keep it in Orders."
+      : "Could not move this order to Trash. Check the database migration and try again.";
+    back("/admin/orders", "error", message);
+  }
+
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin/trash");
+  back("/admin/orders", "ok", "Order moved to Trash. You can restore it from Admin → Trash.");
 }
 
 async function retryOrderPlacedEmail(fd) {
@@ -112,11 +135,13 @@ async function retryCurrentStatusEmail(fd) {
   revalidatePath("/admin/orders");
 }
 
-export default async function Orders() {
+export default async function Orders({ searchParams }) {
   const sb = await requireAdmin();
+  const sp = await searchParams;
   const { data: orders, error } = await sb
     .from("orders")
     .select("id,email,status,payment_status,payment_method,payment_reference,tracking_number,total_cents,created_at,shipping_address")
+    .is("trashed_at", null)
     .order("created_at", { ascending: false })
     .limit(100);
 
@@ -144,7 +169,9 @@ export default async function Orders() {
   return (
     <>
       <h1 className="mb-2 font-serif text-4xl">Orders</h1>
-      <p className="mb-6 text-sm text-taupe">Latest 100 orders. Open “Order details” to see products, quantities, prices and shipping information.</p>
+      <Flash ok={sp?.ok} error={sp?.error} />
+      <p className="mb-3 text-sm text-taupe">Latest 100 active orders. Open “Order details” to see products, quantities, prices and shipping information.</p>
+      <p className="mb-6 text-sm"><a href="/admin/trash" className="underline">View Trash / restore items</a></p>
       {error && <p role="alert" className="mb-4 border border-red-800 p-3 text-sm text-red-800">Could not load orders. Please refresh or check the server logs.</p>}
       {itemsError && <p role="alert" className="mb-4 border border-red-800 p-3 text-sm text-red-800">Order products could not be loaded. The order status controls remain available.</p>}
       {emailEventsError && <p role="alert" className="mb-4 border border-red-800 p-3 text-sm text-red-800">Email event status could not be loaded. Check the email recovery migration and database logs.</p>}
@@ -240,6 +267,17 @@ export default async function Orders() {
                 </details>
 
                 <OrderStatusForm order={o} action={update} statusOptions={STATUS} payOptions={PAY} selectClass={sel}/>
+                {["pending", "cancelled"].includes(o.status) && o.payment_status !== "paid" && (
+                  <form action={trashOrder} className="mt-3">
+                    <input type="hidden" name="id" value={o.id} />
+                    <ConfirmButton
+                      message="Move this pending/cancelled order to Trash? It will be hidden from active Orders and can be restored later. Pending stock reservations will be released."
+                      className="border border-red-800 px-3 py-2 text-xs font-medium text-red-800 hover:bg-red-50"
+                    >
+                      Move to Trash
+                    </ConfirmButton>
+                  </form>
+                )}
               </li>
             );
           })}
