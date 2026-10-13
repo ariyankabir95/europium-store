@@ -57,6 +57,15 @@ export default async function Orders() {
   const { data: orderItems, error: itemsError } = orderIds.length
     ? await sb.from("order_items").select("id,order_id,name,unit_price_cents,quantity").in("order_id", orderIds).order("id", { ascending: true })
     : { data: [], error: null };
+  const { data: emailEvents, error: emailEventsError } = orderIds.length
+    ? await sb.from("order_email_events").select("order_id,event_type,status,updated_at").in("order_id", orderIds).order("created_at", { ascending: true })
+    : { data: [], error: null };
+
+  const emailEventsByOrder = new Map();
+  for (const event of emailEvents ?? []) {
+    if (!emailEventsByOrder.has(event.order_id)) emailEventsByOrder.set(event.order_id, []);
+    emailEventsByOrder.get(event.order_id).push(event);
+  }
 
   const itemsByOrder = new Map();
   for (const item of orderItems ?? []) {
@@ -71,6 +80,7 @@ export default async function Orders() {
       <p className="mb-6 text-sm text-taupe">Latest 100 orders. Open “Order details” to see products, quantities, prices and shipping information.</p>
       {error && <p role="alert" className="mb-4 border border-red-800 p-3 text-sm text-red-800">Could not load orders. Please refresh or check the server logs.</p>}
       {itemsError && <p role="alert" className="mb-4 border border-red-800 p-3 text-sm text-red-800">Order products could not be loaded. The order status controls remain available.</p>}
+      {emailEventsError && <p role="alert" className="mb-4 border border-red-800 p-3 text-sm text-red-800">Email event status could not be loaded. Check the email recovery migration and database logs.</p>}
       {!orders?.length ? <p className="text-umber">No orders yet.</p> : (
         <ul className="divide-y divide-sand border-y border-sand text-sm">
           {orders.map((o) => {
@@ -106,6 +116,40 @@ export default async function Orders() {
                       </section>
                     )}
                     {o.tracking_number && <p className="border-t border-sand pt-3 text-xs">Tracking: {o.tracking_number}</p>}
+                    <section className="border-t border-sand pt-3">
+                      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider">Transactional email events</h3>
+                      {!emailEventsByOrder.get(o.id)?.length ? (
+                        <p className="text-xs text-taupe">No order email events recorded.</p>
+                      ) : (
+                        <ul className="space-y-2">
+                          {emailEventsByOrder.get(o.id).map((event) => {
+                            const labels = {
+                              order_placed: "Order placed",
+                              payment_received: "Payment received",
+                              order_confirmed: "Order confirmed",
+                              order_processing: "Order processing",
+                              order_shipped: "Order shipped",
+                              order_delivered: "Order delivered",
+                              order_cancelled: "Order cancelled",
+                              order_refunded: "Order refunded",
+                            };
+                            const state = event.status === "sent"
+                              ? "Provider accepted"
+                              : event.status === "needs_review"
+                                ? "Needs review — check provider logs before any manual resend"
+                                : "Sending / retry pending";
+                            return (
+                              <li key={event.event_type} className="flex flex-wrap justify-between gap-2 text-xs">
+                                <span>{labels[event.event_type] ?? event.event_type}</span>
+                                <span className={event.status === "needs_review" ? "font-medium text-red-800" : "text-taupe"}>
+                                  {state} · {new Date(event.updated_at).toLocaleString("en-GB")}
+                                </span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </section>
                   </div>
                 </details>
 
