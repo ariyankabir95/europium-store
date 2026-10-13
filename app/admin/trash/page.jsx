@@ -1,5 +1,3 @@
-"use server";
-
 import { revalidatePath } from "next/cache";
 import { requireAdmin, str, uuid } from "@/lib/admin";
 import { money } from "@/lib/format";
@@ -7,6 +5,7 @@ import { back } from "@/lib/cms-admin";
 import Flash from "@/components/admin/Flash";
 
 async function restoreOrder(fd) {
+  "use server";
   const sb = await requireAdmin();
   const id = str(fd, "id");
   if (!uuid(id)) back("/admin/trash", "error", "Invalid order ID.");
@@ -21,6 +20,7 @@ async function restoreOrder(fd) {
 }
 
 async function restoreCustomer(fd) {
+  "use server";
   const sb = await requireAdmin();
   const id = str(fd, "id");
   if (!uuid(id)) back("/admin/trash", "error", "Invalid customer ID.");
