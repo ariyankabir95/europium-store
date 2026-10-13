@@ -66,7 +66,7 @@
 
 ### H. Customer accounts and checkout
 - [ ] Verify profile, addresses, order history and order details are customer-scoped.
-- [ ] Verify checkout uses server-side prices, stock checks and coupon validation.
+- [x] Checkout uses server-side prices, stock checks and coupon validation through the database RPC. It now rejects carts with more than 50 separate lines instead of silently truncating the order and clearing all cart rows; end-to-end checkout testing remains required.
 - [x] Add atomic DB-backed rate limits for checkout, contact, newsletter, reviews and customer support (5 checkout/contact requests per 15 minutes; 3 newsletter signups/hour; 5 reviews/hour per signed-in user; 3 new support tickets and 10 replies/hour per signed-in user). Requires migration `0023_public_rate_limits.sql`; CAPTCHA and hosting-level IP throttling remain separate optional defenses.
 - [ ] Verify cart/wishlist persistence behavior and document any local-only fallback.
 - [ ] Ensure checkout failures are understandable and do not leave inconsistent stock reservations.
