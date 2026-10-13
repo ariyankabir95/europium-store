@@ -132,3 +132,5 @@
 - No production database, live orders, payment statuses, or deployment configuration was changed by this branch work.
 
 - Documentation audit: removed the stale stock-reactivation risk statement after adding migration `0024`, and clarified that Social Bar defaults preserve existing behavior pending the store owner's production decision.
+
+- Fixed saved-cart read failures: `lib/cart-server.js` now propagates database read errors instead of silently treating them as an empty cart. Cart API returns a visible retryable error, and checkout stops with a 503 before order creation if it cannot verify the saved cart. This is code-complete; CI and runtime/database behavior still need verification.
