@@ -27,7 +27,12 @@ export async function POST(req) {
     if (!isEmail(email) || Object.values(address).some((v) => !v))
         return fail("Please complete every field with a valid email.", 400);
     // Items come from the signed-in user's saved cart, never from the request body.
-    const cart = await readCart(sb, user.id);
+    let cart;
+    try {
+        cart = await readCart(sb, user.id);
+    } catch {
+        return fail("We couldn\u0027t verify your saved cart. No order was placed; please try again.", 503);
+    }
     if (!cart.length)
         return fail("Your cart is empty.", 400);
     // The database order RPC accepts at most 50 lines. Never silently truncate a larger cart
