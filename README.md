@@ -95,7 +95,7 @@ Run `supabase/migrations/0014_reviews_messages.sql` in Supabase after 0013. It i
 
 
 ## Recovering interrupted order emails (migration `0025_order_email_recovery.sql`)
-Order emails now persist the exact provider request payload and a deterministic Resend idempotency key before sending. The recovery route retries stale `sending` events with that same payload/key, so a process crash after provider acceptance can safely be retried during Resend's idempotency window. Automatic retries stop after 20 hours; older ambiguous events are marked `needs_review` instead of risking a duplicate. Existing legacy `sending` rows without a stored payload are also flagged for review once stale.
+Order emails now persist the exact provider request payload and a deterministic Resend idempotency key before sending. The recovery route retries stale `sending` events with that same payload/key, so a process crash after provider acceptance can safely be retried during Resend's idempotency window. Automatic retries are capped at five attempts and stop after 20 hours; older or exhausted ambiguous events are marked `needs_review` instead of risking a duplicate. Existing legacy `sending` rows without a stored payload are also flagged for review once stale.
 
 Before deploying this code:
 1. Review and apply `supabase/migrations/0025_order_email_recovery.sql` after the earlier required migrations, first on a disposable Supabase project.
