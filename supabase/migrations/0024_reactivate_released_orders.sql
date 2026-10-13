@@ -18,6 +18,7 @@ declare
   o orders%rowtype;
   r record;
   avail int;
+  needed int;
 begin
   if not is_admin() then
     raise exception 'forbidden';
@@ -61,15 +62,27 @@ begin
 
   elsif o.stock_state = 'released' and p_status in ('pending', 'confirmed', 'processing', 'shipped', 'delivered') then
     -- Lock and check every variant before changing any stock, so failure rolls back atomically.
+    -- Lock each affected variant once and compare against the TOTAL quantity for that
+    -- variant. An order can contain duplicate lines for one variant; checking each line
+    -- independently against the same pre-update stock snapshot could otherwise under-reserve.
     for r in
-      select oi.variant_id, oi.quantity, pv.stock, pv.reserved
-      from order_items oi
-      join product_variants pv on pv.id = oi.variant_id
-      where oi.order_id = p_order and oi.variant_id is not null
-      for update of pv
+      select pv.id, pv.stock, pv.reserved
+      from product_variants pv
+      where pv.id in (
+        select distinct oi.variant_id
+        from order_items oi
+        where oi.order_id = p_order and oi.variant_id is not null
+      )
+      order by pv.id
+      for update
     loop
+      select coalesce(sum(oi.quantity), 0)::int
+      into needed
+      from order_items oi
+      where oi.order_id = p_order and oi.variant_id = r.id;
+
       avail := r.stock - r.reserved;
-      if avail < r.quantity then
+      if avail < needed then
         raise exception 'insufficient_stock';
       end if;
     end loop;
