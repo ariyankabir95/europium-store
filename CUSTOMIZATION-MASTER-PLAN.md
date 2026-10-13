@@ -51,7 +51,7 @@
 - [ ] Manage product copy, SEO fields, category, tags, badges, pricing and publication.
 - [ ] Manage product image gallery order, alt text, primary image and per-color images.
 - [ ] Manage variant size/color/SKU/stock/low-stock threshold/active state without corrupting reserved stock.
-- [ ] Manage category and collection pages, product assignments, visibility and ordering.
+- [x] Manage category and collection pages, product assignments, visibility and ordering. Added parent/child categories and descendant product inclusion; requires migration `0022_category_hierarchy.sql`.
 - [ ] Prevent unsafe product deletion when order history exists; show an actionable error or archive instead.
 
 ### G. Orders, payments and inventory
@@ -110,6 +110,7 @@
 - Added `adsterra_social_bar_enabled` to default settings and Admin → Settings; the existing Social Bar script now respects that toggle. Default is enabled to preserve current behavior until the admin turns it off. The script is now excluded from admin, account, cart, checkout, login, auth and wishlist routes to avoid interfering with transactional/admin workflows.
 - Confirmed `adsterra_native` already exists as a CMS section type, so Admin → Pages can add/hide/remove the Native Banner section without adding a second, competing control.
 - Added `0021_nested_navigation.sql`, parent selection in Admin → Navigation, same-menu/cycle validation, and nested desktop/mobile rendering. This migration has **not** been applied to production.
+- Added `0022_category_hierarchy.sql`, parent selection in Admin → Categories, child-category links on category pages, and descendant-product inclusion. This migration has **not** been applied to production.
 - Updated Admin → Products to prevent deletion when order history exists and show visible errors for failed mutations.
 - Added search and 50-row pagination to Admin → Inventory, plus visible update/load errors.
 - Opened PR #2 for CI verification; it is not merged and does not deploy production by itself.
