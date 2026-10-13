@@ -12,6 +12,7 @@ async function save(fd) {
     await sb.from("site_settings").upsert({ key: "general", value: {
             store_name: str(fd, "store_name", 80) || DEFAULT_SETTINGS.store_name, contact_email: str(fd, "contact_email", 254), phone: str(fd, "phone", 40), instagram_url: str(fd, "instagram_url", 300),
             bkash_number: str(fd, "bkash_number", 40), bkash_instructions: str(fd, "bkash_instructions", 500),
+            adsterra_social_bar_enabled: fd.get("adsterra_social_bar_enabled") === "on",
             warm: safeHex(str(fd, "warm", 20), DEFAULT_SETTINGS.warm), cream: safeHex(str(fd, "cream", 20), DEFAULT_SETTINGS.cream), sand: safeHex(str(fd, "sand", 20), DEFAULT_SETTINGS.sand),
             taupe: safeHex(str(fd, "taupe", 20), DEFAULT_SETTINGS.taupe), umber: safeHex(str(fd, "umber", 20), DEFAULT_SETTINGS.umber), charcoal: safeHex(str(fd, "charcoal", 20), DEFAULT_SETTINGS.charcoal), ink: safeHex(str(fd, "ink", 20), DEFAULT_SETTINGS.ink),
             font_sans: SANS.includes(str(fd, "font_sans")) ? str(fd, "font_sans") : DEFAULT_SETTINGS.font_sans,
@@ -83,6 +84,10 @@ export default async function Settings() {
   </div>
     </div></section>
     <section className="space-y-4"><h2 className="text-xs tracking-[0.18em] uppercase">Manual bKash</h2><div><label htmlFor="bkash_number" className="mb-1 block text-sm">bKash number</label><input id="bkash_number" name="bkash_number" defaultValue={s.bkash_number} placeholder="01XXXXXXXXX" className={input}/></div><div><label htmlFor="bkash_instructions" className="mb-1 block text-sm">Payment instructions</label><textarea id="bkash_instructions" name="bkash_instructions" defaultValue={s.bkash_instructions} rows={4} className="w-full border border-sand bg-transparent px-3 py-2"/></div><p className="text-xs text-taupe">Customers will see this number and instruction on checkout. Orders stay unpaid until you verify the transaction ID in Admin → Orders.</p></section>
+    <section className="space-y-3 border border-sand p-4">
+      <h2 className="text-xs tracking-[0.18em] uppercase">Advertisement controls</h2>
+      <label className="flex items-start gap-3 text-sm"><input type="checkbox" name="adsterra_social_bar_enabled" defaultChecked={s.adsterra_social_bar_enabled !== false} className="mt-1 h-5 w-5"/><span><strong>Enable Adsterra Social Bar</strong><span className="mt-1 block text-xs text-taupe">Turns the existing Social Bar script on or off across the storefront. This does not control other Adsterra units or native banner placements.</span></span></label>
+    </section>
     <section className="space-y-3 border border-sand p-4">
       <h2 className="text-xs tracking-[0.18em] uppercase">Email test</h2>
       <p className="text-sm text-taupe">Send a test email to the email address of the currently signed-in admin account.</p>
