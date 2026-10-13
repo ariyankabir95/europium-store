@@ -125,7 +125,7 @@ function CheckoutContents() {
               </label>
               <label className="flex items-start gap-3 text-sm">
                 <input type="radio" name="paymentChoice" value="bkash_manual" checked={paymentMethod === "bkash_manual"} onChange={() => setPaymentMethod("bkash_manual")} className="mt-1" />
-                <span><strong>bKash — manual verification</strong><span className="block text-taupe">{paymentReady ? "Send payment to " + config.bkash_number : "Online payment is unavailable until the store configures its bKash number."}</span></span>
+                <span><strong>Prepayment — bKash</strong><span className="block text-taupe">{paymentReady ? "Pay before delivery to " + config.bkash_number + ". Your order is confirmed after payment verification." : "Prepayment is unavailable until the store configures its bKash number."}</span></span>
               </label>
             </div>
             {paymentMethod === "bkash_manual" && paymentReady && (
