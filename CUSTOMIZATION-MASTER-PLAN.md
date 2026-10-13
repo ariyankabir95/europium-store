@@ -85,7 +85,7 @@
 
 ### K. Performance, accessibility and reliability
 - [ ] Audit product/catalog loading so page size and latency remain reasonable as the catalog grows.
-- [ ] Add pagination/search to large admin lists where needed.
+- [x] Add search and 50-row pagination to Admin → Inventory; continue evaluating other large lists as the catalog grows.
 - [ ] Check keyboard navigation, labels, focus handling, contrast and mobile layouts.
 - [ ] Verify missing images, missing settings, unavailable CMS tables and empty states degrade gracefully.
 - [ ] Add/maintain security headers, input length limits and useful logging without exposing secrets or personal data.
@@ -111,6 +111,7 @@
 - Confirmed `adsterra_native` already exists as a CMS section type, so Admin → Pages can add/hide/remove the Native Banner section without adding a second, competing control.
 - Added `0021_nested_navigation.sql`, parent selection in Admin → Navigation, same-menu/cycle validation, and nested desktop/mobile rendering. This migration has **not** been applied to production.
 - Updated Admin → Products to prevent deletion when order history exists and show visible errors for failed mutations.
+- Added search and 50-row pagination to Admin → Inventory, plus visible update/load errors.
 - Opened PR #2 for CI verification; it is not merged and does not deploy production by itself.
 - **Not yet verified:** latest CI/build, browser rendering, and live Supabase query permissions for the new order details UI, Social Bar toggle and nested menus.
 - No production database, live orders, payment statuses, or deployment configuration was changed by this branch work.
