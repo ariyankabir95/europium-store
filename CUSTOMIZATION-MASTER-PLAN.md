@@ -42,10 +42,10 @@
 - [ ] Edit footer columns, links, social links, newsletter content and contact details.
 
 ### E. Theme and brand system
-- [ ] Admin-manage all supported theme colors and font choices. Settings now validates contact email/Instagram URL and reports save/test-email success or failure.
+- [x] Admin-manage supported theme colors and font choices. Settings validates contact email/Instagram URL, reports save/test-email success or failure, and can reset only appearance settings to the EUROPIUM defaults.
 - [ ] Verify theme settings are applied consistently across storefront, buttons, cards, forms, menus and footer.
 - [ ] Keep EUROPIUM's warm neutral luxury-minimal identity as defaults.
-- [ ] Provide safe defaults for invalid or missing settings and a way to restore defaults.
+- [x] Provide safe defaults for invalid or missing settings and a way to restore defaults. Admin → Settings now has a confirmed “Reset colors and fonts” action that preserves store/contact/payment/ad settings.
 
 ### F. Products, images, variants and categories
 - [ ] Manage product copy, SEO fields, category, tags, badges, pricing and publication.
@@ -117,6 +117,7 @@
 - Updated Admin → Products to prevent deletion when order history exists and show visible errors for failed mutations.
 - Added search and 50-row pagination to Admin → Inventory, plus visible update/load errors.
 - Opened PR #2 for CI verification; it is not merged and does not deploy production by itself.
-- GitHub Actions build passed for the latest code at commit `d22db57c`; later rate-limit/settings/lookbook edits have triggered fresh CI runs and must pass before merge.
+- GitHub Actions build passed at commit `571aaa5e`. The later theme-reset/settings-precedence changes triggered a fresh CI run; verify that run passes before merge.
+- Fixed legacy nested-theme precedence so current top-level admin color/font edits are not silently overridden by stale nested theme values.
 - **Not yet verified:** browser rendering, live Supabase query permissions, rate-limit behavior against migration `0023`, and full checkout/email/admin workflows.
 - No production database, live orders, payment statuses, or deployment configuration was changed by this branch work.
