@@ -27,10 +27,15 @@ export async function POST(req) {
     if (!isEmail(email) || Object.values(address).some((v) => !v))
         return fail("Please complete every field with a valid email.", 400);
     // Items come from the signed-in user's saved cart, never from the request body.
-    const items = (await readCart(sb, user.id)).slice(0, 50).map((i) => ({ slug: i.productId, size: i.size, color: i.color, qty: i.qty }));
-    if (!items.length)
+    const cart = await readCart(sb, user.id);
+    if (!cart.length)
         return fail("Your cart is empty.", 400);
-    if (!items.length || items.some((i) => !i.slug || !i.size || !i.color || !(i.qty >= 1 && i.qty <= 10)))
+    // The database order RPC accepts at most 50 lines. Never silently truncate a larger cart
+    // and then delete every cart row after checkout, which would make the customer lose items.
+    if (cart.length > 50)
+        return fail("Your cart has too many separate items to check out at once. Remove some items and try again.", 400);
+    const items = cart.map((i) => ({ slug: i.productId, size: i.size, color: i.color, qty: i.qty }));
+    if (items.some((i) => !i.slug || !i.size || !i.color || !(i.qty >= 1 && i.qty <= 10)))
         return fail("Your cart has an invalid item.", 400);
     const paymentMethod = s(b.paymentMethod, 30);
     const paymentReference = s(b.paymentReference, 80);
