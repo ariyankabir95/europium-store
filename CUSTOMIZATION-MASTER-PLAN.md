@@ -79,7 +79,7 @@
 
 ### J. Adsterra and promotional placements
 - [x] Provide Admin enable/disable controls for the existing Social Bar and CMS Native Banner placements. Popunder/Smartlink are not injected by this repo, so they remain external Adsterra configuration rather than new scripts added without an explicit placement decision.
-- [ ] Keep native banner placement editable from CMS.
+- [x] Keep native banner placement editable from CMS; its visibility can also be globally disabled in Admin → Settings without deleting the section.
 - [ ] Avoid enabling popunder/social-bar scripts by default without an explicit store decision.
 - [ ] Validate scripts/URLs and prevent arbitrary unsafe script injection through normal text fields.
 
@@ -108,7 +108,7 @@
 - Reviewed existing `AUDIT.md`, admin settings/navigation/orders, CMS schema, order creation SQL and color-specific image migration.
 - Updated `app/admin/orders/page.jsx` to query the latest 100 orders and their order items in a batched query, and display product/variant label, quantity, unit price, line total, shipping address, and tracking in expandable details.
 - Added `adsterra_social_bar_enabled` to default settings and Admin → Settings; the existing Social Bar script now respects that toggle. Default is enabled to preserve current behavior until the admin turns it off. The script is now excluded from admin, account, cart, checkout, login, auth and wishlist routes to avoid interfering with transactional/admin workflows.
-- Confirmed `adsterra_native` already exists as a CMS section type. Added a separate Admin → Settings toggle for Native Banner placement; disabling it hides existing native sections without deleting CMS content. Social Bar has its own toggle. Popunder/Smartlink are not injected by the repository and were not added as arbitrary scripts.
+- Confirmed `adsterra_native` already exists as a CMS section type. Added a separate Admin → Settings toggle for Native Banner placement; disabling it hides existing native sections without deleting CMS content. The default is enabled to preserve existing behavior. Social Bar has its own toggle. Popunder/Smartlink are not injected by the repository and were not added as arbitrary scripts.
 - Added `0021_nested_navigation.sql`, parent selection in Admin → Navigation, same-menu/cycle validation, and nested desktop/mobile rendering. This migration has **not** been applied to production.
 - Added `0022_category_hierarchy.sql`, parent selection in Admin → Categories, child-category links on category pages, and descendant-product inclusion. This migration has **not** been applied to production.
 - Added `0023_public_rate_limits.sql` and a server-only hashed-key limiter for checkout, contact, newsletter, product-review and customer-support submissions; raw client IPs are not stored. Migration has **not** been applied to production.
@@ -122,4 +122,6 @@
 - Tightened CMS canonical URL validation to require valid HTTPS and removed the sitemap's `example.com` fallback when the canonical site URL is unset.
 - **Not yet verified:** browser rendering, live Supabase query permissions, rate-limit behavior against migration `0023`, and full checkout/email/admin workflows.
 - Added `adsterra_native_enabled` to default settings and made CMS Native Banner sections respect the Admin → Settings toggle; existing behavior stays enabled by default.
+- Fixed the invalid nested form around the appearance-reset confirmation by extending the shared `ConfirmButton` to accept `formAction` and targeting the reset server action directly.
+- GitHub Actions build verification passed for the latest code at commit `db1dd81a3479aaa62cb065841d40e275eda2bc49`; subsequent commits were also individually green through run `38334350745` at the time of the check.
 - No production database, live orders, payment statuses, or deployment configuration was changed by this branch work.
