@@ -17,12 +17,12 @@ function DesktopNavItem({ n, depth = 0 }) {
         return <NavAnchor n={n} className={depth === 0 ? "underline-offset-8 hover:underline" : "block whitespace-nowrap px-4 py-3 hover:bg-cream"}/>;
     }
     return (
-      <div className="group relative">
+      <div className="group/navitem relative">
         <div className={`flex items-center gap-2 ${depth === 0 ? "" : "justify-between px-4 py-3 hover:bg-cream"}`}>
           <NavAnchor n={n} className={depth === 0 ? "underline-offset-8 hover:underline" : "flex-1 whitespace-nowrap"}/>
           <span aria-hidden="true" className="text-[10px]">{depth === 0 ? "⌄" : "›"}</span>
         </div>
-        <div className={`absolute z-50 hidden min-w-48 border border-sand bg-warm py-1 text-charcoal shadow-lg group-hover:block group-focus-within:block ${depth === 0 ? "left-0 top-full" : "left-full top-0"}`}>
+        <div className={`absolute z-50 hidden min-w-48 border border-sand bg-warm py-1 text-charcoal shadow-lg group-hover/navitem:block group-focus-within/navitem:block ${depth === 0 ? "left-0 top-full" : "left-full top-0"}`}>
           {children.map((child) => <DesktopNavItem key={child.id} n={child} depth={depth + 1}/>)}
         </div>
       </div>
