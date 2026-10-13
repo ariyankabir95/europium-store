@@ -9,6 +9,7 @@ const STATUS = ["pending", "confirmed", "processing", "shipped", "delivered", "c
 // Mirrors the error.message.includes(...) mapping already used for RPC errors in app/api/checkout/route.js.
 function statusErrorMessage(error) {
   if (error.message.includes("insufficient_stock")) return "Can't set this status: not enough stock is available to fulfill this order right now.";
+  if (error.message.includes("invalid_stock_transition")) return "This order has already committed stock for shipment. Use the return/refund workflow instead of moving it back to pre-shipment.";
   if (error.message.includes("forbidden")) return "You don't have permission to change this order.";
   if (error.message.includes("invalid_status")) return "That status isn't valid.";
   if (error.message.includes("invalid_payment_status")) return "That payment status isn't valid.";
