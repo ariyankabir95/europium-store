@@ -1,6 +1,6 @@
-import Script from "next/script";
 import { Asap, Bebas_Neue } from "next/font/google";
 import Footer from "@/components/layout/Footer";
+import AdsterraSocialBar from "@/components/ads/AdsterraSocialBar";
 import { getProducts } from "@/lib/catalog";
 import { DEFAULT_SETTINGS, getPublicSettings } from "@/lib/cms";
 import { getHeader } from "@/lib/cms-data";
@@ -100,13 +100,7 @@ export default async function RootLayout({ children, }) {
     };
     return (<html lang="en" className={`${asap.variable} ${bebas.variable}`} style={style}>
       <body>
-          {settings.adsterra_social_bar_enabled !== false && (
-            <Script
-              id="adsterra-social-bar"
-              src="https://pl31702073.profitableratecpmnetwork.com/43/6e/bd/436ebd30ddb03269f3c353ab0bcabf3b.js"
-              strategy="afterInteractive"
-            />
-          )}
+          <AdsterraSocialBar enabled={settings.adsterra_social_bar_enabled !== false}/>
         <StoreProvider products={products}>
           <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[80] focus:bg-warm focus:p-3">
             Skip to content
