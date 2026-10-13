@@ -21,7 +21,7 @@ npm run dev
 
 ## Supabase setup
 1. Create a project; put URL and anon key in `.env.local`. Keep the service role key server-only.
-2. Run migrations in order: `0001`–`0008`, then `0010`–`0023` (SQL editor or `supabase db push`), skipping only migrations already applied to this project. There is intentionally no `0009`. **`0012_fix_create_order.sql` is required**: without it, checkout fails for every order that has no coupon. Migration `0021_nested_navigation.sql` adds parent/child header menu support; `0022_category_hierarchy.sql` adds parent/child categories; `0023_public_rate_limits.sql` enables atomic rate limiting for contact, newsletter, reviews and checkout. Apply migrations `0021`–`0023` to Supabase **before deploying code that uses these features**. `0002_seed.sql` adds demo products.
+2. Run migrations in order: `0001`–`0008`, then `0010`–`0024` (SQL editor or `supabase db push`), skipping only migrations already applied to this project. There is intentionally no `0009`. **`0012_fix_create_order.sql` is required**: without it, checkout fails for every order that has no coupon. Migration `0021_nested_navigation.sql` adds parent/child header menu support; `0022_category_hierarchy.sql` adds parent/child categories; `0023_public_rate_limits.sql` enables atomic rate limiting for contact, newsletter, reviews and checkout; `0024_reactivate_released_orders.sql` safely reserves stock if a released order is reactivated as pending. Apply migrations `0021`–`0024` to Supabase **before deploying code that uses these features**. `0002_seed.sql` adds demo products.
 3. Create Storage buckets `products`, `categories`, `lookbook` (public read, admin write).
 4. Sign up a user, then make them admin: `update profiles set role='admin' where id='<user uuid>';`
 
