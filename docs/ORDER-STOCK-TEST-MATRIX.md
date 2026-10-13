@@ -4,7 +4,7 @@ This is a **pre-production test plan**, not evidence that the database tests hav
 
 ## Before testing
 
-1. Use the same migration sequence documented in `README.md`; apply missing migrations in order, especially `0019_stale_order_safety.sql`, `0023_public_rate_limits.sql`, and `0024_reactivate_released_orders.sql`.
+1. Use the same migration sequence documented in `README.md`; apply missing migrations in order, especially `0019_stale_order_safety.sql`, `0023_public_rate_limits.sql`, `0024_reactivate_released_orders.sql`, and `0025_order_email_recovery.sql`.
 2. Create a fake product variant with known stock and reserved quantities, plus test orders whose item rows refer only to that variant.
 3. Record the initial values of `orders.status`, `orders.stock_state`, `product_variants.stock`, and `product_variants.reserved`.
 4. Run each scenario in isolation and reset the fake fixture between cases.
@@ -41,6 +41,12 @@ Use test identities only. Call each route repeatedly within its configured time 
 - Force an invalid/insufficient-stock transition; verify no payment/tracking edit persists and the Admin page shows a useful error.
 - Verify email failures do not roll back a successful order update and do not expose secrets in logs.
 - Verify only an actual transition to `paid` triggers the payment-received email, and a status change triggers the status email.
+- With migration `0025_order_email_recovery.sql) applied to the disposable database, verify each new event persists the exact payload and deterministic idempotency key before provider send.
+- Simulate a crash after the provider accepts an email but before `status='sent'`; run two recovery workers concurrently and verify Resend idempotency returns the same provider email rather than delivering a duplicate.
+- Verify a stale event younger than 20 hours is leased by only one worker and retried with the original stored payload/key; verify a stale event older than 20 hours becomes `needs_review` and is not automatically sent.
+- Verify pre-migration `sending` rows with no stored payload are flagged for review only after their lease becomes stale.
+- Verify a non-retryable provider response becomes `needs_review`, while network/timeout/429/5xx failures retain the claim for safe retry.
+- Confirm the protected recovery route returns 401 for a missing/wrong bearer token, 503 when required configuration is absent, and a bounded summary for an authorized run.
 - Confirm the order-details panel loads the correct item quantities, prices and shipping address.
 
 ## Release gate
