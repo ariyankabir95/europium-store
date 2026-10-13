@@ -60,7 +60,7 @@
 - [ ] Verify order status, payment status and tracking are committed atomically via the status RPC.
 - [ ] Test status transitions using disposable test orders only.
 - [ ] Confirm cancelled/refunded/shipped transitions update reserved and physical stock correctly.
-- [x] Add migration `0024_reactivate_released_orders.sql` so reactivating a released/cancelled order as pending re-reserves stock after an availability check. The check locks each affected variant once and totals duplicate order-item lines per variant; still requires disposable-order database tests before production.
+- [x] Add migration `0024_reactivate_released_orders.sql` so reactivating a released/cancelled order as pending re-reserves stock after an availability check. The check locks each affected variant once and totals duplicate order-item lines per variant; it also blocks moving stock-committed orders back to pending/confirmed/processing without a dedicated return/restock flow. Still requires disposable-order database tests before production.
 - [ ] Confirm bKash instructions, transaction reference, manual verification and payment email behavior.
 - [ ] Confirm stale-order cron is separately configured and tested in the hosting provider; route code alone does not create a scheduled job.
 
