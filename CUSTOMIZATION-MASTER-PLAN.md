@@ -72,10 +72,11 @@
 - [ ] Ensure checkout failures are understandable and do not leave inconsistent stock reservations.
 
 ### I. Email and support
-- [ ] Verify order-placed, payment-received and status-change emails with safe, idempotent behavior.
+- [x] Add durable order-email recovery using stored request payloads, deterministic Resend idempotency keys, stale-claim leases and a 20-hour automatic-retry cutoff; requires migration `0025_order_email_recovery.sql` and a separately configured 5-minute Render Cron Job at `/api/cron/retry-order-emails`.
+- [ ] Verify order-placed, payment-received and status-change emails with disposable-database/provider tests, including concurrent retries, network timeouts, and events moved to `needs_review`.
 - [ ] Keep Resend API key server-only; clearly separate test sender limitations from verified-domain production sending.
 - [ ] Manage support conversations and replies from Admin.
-- [ ] Show email event/delivery errors without losing successful order updates.
+- [ ] Show email event/delivery errors without losing successful order updates; add a clear Admin workflow for investigating `needs_review` events.
 
 ### J. Adsterra and promotional placements
 - [x] Provide Admin enable/disable controls for the existing Social Bar and CMS Native Banner placements. Popunder/Smartlink are not injected by this repo, so they remain external Adsterra configuration rather than new scripts added without an explicit placement decision.
