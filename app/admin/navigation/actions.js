@@ -1,6 +1,6 @@
 "use server";
 import { requireAdmin, str, uuid } from "@/lib/admin";
-import { back, ensureMenu, moveRow, nextSort, refreshStorefront } from "@/lib/cms-admin";
+import { back, ensureMenu, nextSort, refreshStorefront } from "@/lib/cms-admin";
 import { parseLink } from "@/lib/cms-schema";
 const PATH = "/admin/navigation";
 export async function saveHeaderSettings(fd) {
