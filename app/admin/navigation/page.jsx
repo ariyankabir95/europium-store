@@ -43,7 +43,7 @@ export default async function AdminNavigation({ searchParams }) {
 
       <h2 className="mb-4 font-serif text-3xl">Menu items</h2>
       <div className="space-y-4">
-        {items.map((it, i) => (<div key={it.id} className={`border border-sand p-4 ${it.active ? "" : "opacity-60"}`}>
+        {items.map((it) => (<div key={it.id} className={`border border-sand p-4 ${it.active ? "" : "opacity-60"}`}>
             <form action={saveNavItem} className="grid gap-3 md:grid-cols-[200px_1fr]">
               <input type="hidden" name="id" value={it.id}/>
               <div><label htmlFor={`l-${it.id}`} className="mb-1 block text-sm">Label</label><input id={`l-${it.id}`} name="label" defaultValue={it.label} required maxLength={60} className={input}/></div>
