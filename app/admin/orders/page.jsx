@@ -89,7 +89,7 @@ export default async function Orders() {
             return (
               <li key={o.id} className="py-5">
                 <p className="mb-2 font-medium">#{o.id.slice(0, 8)} · {o.email} · {money(o.total_cents / 100, "BDT")} · {new Date(o.created_at).toLocaleDateString("en-GB")}</p>
-                <p className="mb-3 text-xs text-taupe">Payment: {o.payment_method === "bkash_manual" ? "bKash manual" : "Not set"}{o.payment_reference ? ` · TrxID: ${o.payment_reference}` : ""}</p>
+                <p className="mb-3 text-xs text-taupe">Payment: {o.payment_method === "bkash_manual" ? "bKash manual" : o.payment_method === "cod" ? "Cash on Delivery" : "Not set"}{o.payment_reference ? ` · TrxID: ${o.payment_reference}` : ""}</p>
 
                 <details className="mb-4 border border-sand px-3 py-3">
                   <summary className="cursor-pointer font-medium">Order details · {items.length} {items.length === 1 ? "item" : "items"}</summary>
