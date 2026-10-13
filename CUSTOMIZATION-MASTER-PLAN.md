@@ -60,7 +60,7 @@
 - [ ] Verify order status, payment status and tracking are committed atomically via the status RPC.
 - [ ] Test status transitions using disposable test orders only.
 - [ ] Confirm cancelled/refunded/shipped transitions update reserved and physical stock correctly.
-- [ ] Fix/verify cancelled-order reactivation so stock is reserved again safely, or block invalid transitions.
+- [x] Add migration `0024_reactivate_released_orders.sql` so reactivating a released/cancelled order as pending re-reserves stock after an availability check; still requires disposable-order database tests before production.
 - [ ] Confirm bKash instructions, transaction reference, manual verification and payment email behavior.
 - [ ] Confirm stale-order cron is separately configured and tested in the hosting provider; route code alone does not create a scheduled job.
 
@@ -112,6 +112,7 @@
 - Added `0021_nested_navigation.sql`, parent selection in Admin → Navigation, same-menu/cycle validation, and nested desktop/mobile rendering. This migration has **not** been applied to production.
 - Added `0022_category_hierarchy.sql`, parent selection in Admin → Categories, child-category links on category pages, and descendant-product inclusion. This migration has **not** been applied to production.
 - Added `0023_public_rate_limits.sql` and a server-only hashed-key limiter for checkout, contact, newsletter and product-review submissions; raw client IPs are not stored. Migration has **not** been applied to production.
+- Added `0024_reactivate_released_orders.sql` to re-reserve stock when an admin changes a released order back to pending. Migration has **not** been applied to production.
 - Updated Admin → Settings to validate contact email/Instagram URL and show save/test-email feedback; updated Admin → Lookbook to validate image/product/order input and show database errors.
 - Updated Admin → Products to prevent deletion when order history exists and show visible errors for failed mutations.
 - Added search and 50-row pagination to Admin → Inventory, plus visible update/load errors.
