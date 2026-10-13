@@ -37,6 +37,12 @@ begin
     raise exception 'not_found';
   end if;
 
+  -- Once stock has been committed for shipment, do not move the order back into an
+  -- active pre-shipment state without a dedicated restock/return workflow.
+  if o.stock_state = 'committed' and p_status in ('pending', 'confirmed', 'processing') then
+    raise exception 'invalid_stock_transition';
+  end if;
+
   if o.stock_state = 'reserved' and p_status in ('cancelled', 'refunded') then
     for r in
       select variant_id, quantity from order_items
