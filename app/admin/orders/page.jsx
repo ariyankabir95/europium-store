@@ -1,7 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin, str, uuid } from "@/lib/admin";
 import { money } from "@/lib/format";
-import { sendOrderStatusEmail, sendPaymentReceivedEmail } from "@/lib/email";
+import { sendOrderPlacedEmail, sendOrderStatusEmail, sendPaymentReceivedEmail } from "@/lib/email";
 import OrderStatusForm from "@/components/admin/OrderStatusForm";
 
 const STATUS = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled", "refunded"], PAY = ["unpaid", "paid", "failed", "refunded"];
@@ -43,6 +43,32 @@ async function update(prevState, fd) {
     if (before.status !== after.status) await sendOrderStatusEmail(id, after.status);
   }
   return { error: null };
+}
+
+async function retryOrderPlacedEmail(fd) {
+  "use server";
+  const sb = await requireAdmin();
+  const id = str(fd, "id");
+  if (!uuid(id)) return;
+
+  const { data: order } = await sb.from("orders").select("id").eq("id", id).maybeSingle();
+  if (!order) return;
+
+  // Only retry when no order_placed event exists. Existing claims are never bypassed.
+  const { data: existing, error } = await sb
+    .from("order_email_events")
+    .select("id")
+    .eq("order_id", id)
+    .eq("event_type", "order_placed")
+    .maybeSingle();
+  if (error) {
+    console.error("[admin/orders] could not check order email event", error.code);
+    return;
+  }
+  if (existing) return;
+
+  await sendOrderPlacedEmail(id);
+  revalidatePath("/admin/orders");
 }
 
 export default async function Orders() {
@@ -148,6 +174,14 @@ export default async function Orders() {
                             );
                           })}
                         </ul>
+                      )}
+                      {!emailEventsByOrder.get(o.id)?.some((event) => event.event_type === "order_placed") && (
+                        <form action={retryOrderPlacedEmail} className="mt-3">
+                          <input type="hidden" name="id" value={o.id} />
+                          <button type="submit" className="border border-umber px-3 py-2 text-xs font-medium hover:bg-sand">
+                            Send order confirmation email
+                          </button>
+                        </form>
                       )}
                     </section>
                   </div>
