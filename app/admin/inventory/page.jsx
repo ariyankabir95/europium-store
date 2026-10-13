@@ -30,7 +30,7 @@ export default async function Inventory({ searchParams }) {
   const sb = await requireAdmin();
   const sp = await searchParams;
   const rawQuery = Array.isArray(sp.q) ? sp.q[0] : sp.q;
-  const q = String(rawQuery ?? "").trim().slice(0, 80).replace(/[,%()]/g, " ").trim();
+  const q = String(rawQuery ?? "").trim().slice(0, 80).replace(/[^a-zA-Z0-9 _-]/g, " ").trim();
   const rawPage = Array.isArray(sp.page) ? sp.page[0] : sp.page;
   const requestedPage = Math.trunc(Number(rawPage ?? 1));
   const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
