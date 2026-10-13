@@ -1,5 +1,9 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin, str } from "@/lib/admin";
+import { isEmail } from "@/lib/validate";
+import { back } from "@/lib/cms-admin";
+import Flash from "@/components/admin/Flash";
+import ConfirmButton from "@/components/admin/ConfirmButton";
 import { DEFAULT_SETTINGS, getSettings } from "@/lib/cms";
 import { sendEmail } from "@/lib/email";
 const HEX = /^#[0-9a-fA-F]{6}$/;
@@ -9,9 +13,23 @@ const SERIF = ["georgia", "times", "system"];
 async function save(fd) {
     "use server";
     const sb = await requireAdmin();
-    await sb.from("site_settings").upsert({ key: "general", value: {
-            store_name: str(fd, "store_name", 80) || DEFAULT_SETTINGS.store_name, contact_email: str(fd, "contact_email", 254), phone: str(fd, "phone", 40), instagram_url: str(fd, "instagram_url", 300),
+    const contactEmail = str(fd, "contact_email", 254);
+    if (contactEmail && !isEmail(contactEmail))
+        back("/admin/settings", "error", "Enter a valid contact email address.");
+    const instagramUrl = str(fd, "instagram_url", 300);
+    if (instagramUrl) {
+        let valid = false;
+        try {
+            const parsed = new URL(instagramUrl);
+            valid = parsed.protocol === "https:" && ["instagram.com", "www.instagram.com"].includes(parsed.hostname.toLowerCase());
+        } catch {}
+        if (!valid) back("/admin/settings", "error", "Instagram URL must be a valid https://instagram.com link.");
+    }
+    const { error } = await sb.from("site_settings").upsert({ key: "general", value: {
+            store_name: str(fd, "store_name", 80) || DEFAULT_SETTINGS.store_name, contact_email: contactEmail, phone: str(fd, "phone", 40), instagram_url: instagramUrl,
             bkash_number: str(fd, "bkash_number", 40), bkash_instructions: str(fd, "bkash_instructions", 500),
+            adsterra_social_bar_enabled: fd.get("adsterra_social_bar_enabled") === "on",
+            adsterra_native_enabled: fd.get("adsterra_native_enabled") === "on",
             warm: safeHex(str(fd, "warm", 20), DEFAULT_SETTINGS.warm), cream: safeHex(str(fd, "cream", 20), DEFAULT_SETTINGS.cream), sand: safeHex(str(fd, "sand", 20), DEFAULT_SETTINGS.sand),
             taupe: safeHex(str(fd, "taupe", 20), DEFAULT_SETTINGS.taupe), umber: safeHex(str(fd, "umber", 20), DEFAULT_SETTINGS.umber), charcoal: safeHex(str(fd, "charcoal", 20), DEFAULT_SETTINGS.charcoal), ink: safeHex(str(fd, "ink", 20), DEFAULT_SETTINGS.ink),
             font_sans: SANS.includes(str(fd, "font_sans")) ? str(fd, "font_sans") : DEFAULT_SETTINGS.font_sans,
@@ -20,16 +38,31 @@ async function save(fd) {
                 : DEFAULT_SETTINGS.font_display,
             font_serif: SERIF.includes(str(fd, "font_serif")) ? str(fd, "font_serif") : DEFAULT_SETTINGS.font_serif,
         } });
+    if (error) back("/admin/settings", "error", "Could not save settings. Check the database and try again.");
     revalidatePath("/", "layout");
     revalidatePath("/contact");
     revalidatePath("/checkout");
+    back("/admin/settings", "ok", "Settings saved.");
+}
+async function resetAppearance() {
+    "use server";
+    const sb = await requireAdmin();
+    const { data: current, error: readError } = await sb.from("site_settings").select("value").eq("key", "general").maybeSingle();
+    if (readError) back("/admin/settings", "error", "Could not load current settings. Nothing was changed.");
+    const value = current?.value && typeof current.value === "object" ? current.value : {};
+    const next = { ...value, warm: DEFAULT_SETTINGS.warm, cream: DEFAULT_SETTINGS.cream, sand: DEFAULT_SETTINGS.sand, taupe: DEFAULT_SETTINGS.taupe, umber: DEFAULT_SETTINGS.umber, charcoal: DEFAULT_SETTINGS.charcoal, ink: DEFAULT_SETTINGS.ink, font_sans: DEFAULT_SETTINGS.font_sans, font_serif: DEFAULT_SETTINGS.font_serif, font_display: DEFAULT_SETTINGS.font_display };
+    if (next.theme && typeof next.theme === "object") next.theme = { ...next.theme, warm: DEFAULT_SETTINGS.warm, cream: DEFAULT_SETTINGS.cream, sand: DEFAULT_SETTINGS.sand, taupe: DEFAULT_SETTINGS.taupe, umber: DEFAULT_SETTINGS.umber, charcoal: DEFAULT_SETTINGS.charcoal, ink: DEFAULT_SETTINGS.ink, font_sans: DEFAULT_SETTINGS.font_sans, font_serif: DEFAULT_SETTINGS.font_serif, font_display: DEFAULT_SETTINGS.font_display };
+    const { error } = await sb.from("site_settings").upsert({ key: "general", value: next });
+    if (error) back("/admin/settings", "error", "Could not restore theme defaults. Other settings were not intentionally changed.");
+    revalidatePath("/", "layout");
+    back("/admin/settings", "ok", "Default colors and fonts restored. Store, payment, contact and ad settings were kept.");
 }
 async function sendTestEmail() {
     "use server";
     const sb = await requireAdmin();
     const { data: { user } } = await sb.auth.getUser();
     if (!user?.email)
-        throw new Error("Your admin account has no email address.");
+        back("/admin/settings", "error", "Your admin account has no email address.");
     const result = await sendEmail({
         to: user.email,
         subject: "Europium email test",
@@ -37,14 +70,16 @@ async function sendTestEmail() {
         html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:32px"><h1 style="margin:0 0 16px">Europium</h1><p>Your Resend email setup is working.</p><p style="color:#666;font-size:14px">This is a test email sent from the Europium admin panel.</p></div>`,
     });
     if (!result.ok)
-        throw new Error(result.error);
+        back("/admin/settings", "error", "Test email could not be sent. Check Resend and EMAIL_FROM settings.");
+    back("/admin/settings", "ok", "Test email sent to your admin email address.");
 }
 const input = "min-h-11 w-full border border-sand bg-transparent px-3";
 const colors = [["warm", "Background"], ["cream", "Surface"], ["sand", "Border"], ["taupe", "Muted"], ["umber", "Secondary text"], ["charcoal", "Primary"], ["ink", "Primary hover"]];
-export default async function Settings() {
+export default async function Settings({ searchParams }) {
     await requireAdmin();
+    const sp = await searchParams;
     const s = await getSettings();
-    return (<><h1 className="mb-6 font-serif text-4xl">Settings</h1><form action={save} className="max-w-2xl space-y-8">
+    return (<><h1 className="mb-3 font-serif text-4xl">Settings</h1><Flash ok={sp.ok} error={sp.error}/><form action={save} className="max-w-2xl space-y-8">
     <section className="space-y-4"><h2 className="text-xs tracking-[0.18em] uppercase">Store</h2>{[['store_name', 'Store name'], ['contact_email', 'Contact email'], ['phone', 'Phone'], ['instagram_url', 'Instagram URL']].map(([k, l]) => <div key={k}><label htmlFor={k} className="mb-1 block text-sm">{l}</label><input id={k} name={k} defaultValue={s[k]} className={input}/></div>)}</section>
     <section className="space-y-4"><h2 className="text-xs tracking-[0.18em] uppercase">Theme</h2><div className="grid gap-4 sm:grid-cols-2">{colors.map(([k, l]) => <div key={k} className="flex items-center gap-3 border border-sand p-3"><input type="color" id={k} name={k} defaultValue={s[k]} className="h-11 w-14 shrink-0 cursor-pointer bg-transparent"/><div><label htmlFor={k} className="block text-sm">{l}</label><p className="text-xs text-taupe">{s[k]}</p></div></div>)}</div><div className="grid gap-4 sm:grid-cols-3">
   <div>
@@ -84,11 +119,19 @@ export default async function Settings() {
     </div></section>
     <section className="space-y-4"><h2 className="text-xs tracking-[0.18em] uppercase">Manual bKash</h2><div><label htmlFor="bkash_number" className="mb-1 block text-sm">bKash number</label><input id="bkash_number" name="bkash_number" defaultValue={s.bkash_number} placeholder="01XXXXXXXXX" className={input}/></div><div><label htmlFor="bkash_instructions" className="mb-1 block text-sm">Payment instructions</label><textarea id="bkash_instructions" name="bkash_instructions" defaultValue={s.bkash_instructions} rows={4} className="w-full border border-sand bg-transparent px-3 py-2"/></div><p className="text-xs text-taupe">Customers will see this number and instruction on checkout. Orders stay unpaid until you verify the transaction ID in Admin → Orders.</p></section>
     <section className="space-y-3 border border-sand p-4">
+      <h2 className="text-xs tracking-[0.18em] uppercase">Advertisement controls</h2>
+      <label className="flex items-start gap-3 text-sm"><input type="checkbox" name="adsterra_social_bar_enabled" defaultChecked={s.adsterra_social_bar_enabled !== false} className="mt-1 h-5 w-5"/><span><strong>Enable Adsterra Social Bar</strong><span className="mt-1 block text-xs text-taupe">Turns the existing Social Bar script on or off across the storefront. This does not control other Adsterra units or native banner placements.</span></span></label>
+      <label className="flex items-start gap-3 text-sm"><input type="checkbox" name="adsterra_native_enabled" defaultChecked={s.adsterra_native_enabled !== false} className="mt-1 h-5 w-5"/><span><strong>Enable Adsterra Native Banner</strong><span className="mt-1 block text-xs text-taupe">Controls Native Banner sections added through Admin → Pages. Disabling this hides the placement without deleting its CMS section.</span></span></label>
+    </section>
+    <section className="space-y-3 border border-sand p-4">
       <h2 className="text-xs tracking-[0.18em] uppercase">Email test</h2>
       <p className="text-sm text-taupe">Send a test email to the email address of the currently signed-in admin account.</p>
       <button formAction={sendTestEmail} className="btn-line min-h-11 px-4">Send test email</button>
       <p className="text-xs text-taupe">Testing uses the EMAIL_FROM value from .env.local. Do not put the Resend API key in the browser or GitHub.</p>
     </section>
-    <button className="btn-dark">Save settings</button>
+    <div className="flex flex-wrap items-center gap-3">
+      <button className="btn-dark">Save settings</button>
+      <ConfirmButton formAction={resetAppearance} message="Restore EUROPIUM's default colors and fonts? Store details, bKash settings and advertisement controls will be kept." className="btn-line min-h-11 px-4">Reset colors and fonts</ConfirmButton>
+    </div>
   </form></>);
 }

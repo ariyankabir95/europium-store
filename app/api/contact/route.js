@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { supabaseServer, hasSupabase } from "@/lib/supabase/server";
 import { isEmail } from "@/lib/validate";
+import { consumeRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 export async function POST(req) {
     if (!hasSupabase())
         return NextResponse.json({ error: "The contact form is not available yet." }, { status: 503 });
+    const limited = await consumeRateLimit(req, "contact", { limit: 5, windowSeconds: 900 });
+    const limitResponse = rateLimitResponse(NextResponse, limited);
+    if (limitResponse) return limitResponse;
     const b = await req.json().catch(() => null);
     const name = String(b?.name ?? "").trim().slice(0, 120), email = String(b?.email ?? "").trim(), subject = String(b?.subject ?? "").trim().slice(0, 200), message = String(b?.message ?? "").trim().slice(0, 5000);
     if (!name || !isEmail(email) || message.length < 10)

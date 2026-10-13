@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { supabaseServer, hasSupabase } from "@/lib/supabase/server";
 import { isEmail } from "@/lib/validate";
+import { consumeRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 export async function POST(req) {
     if (!hasSupabase())
         return NextResponse.json({ error: "Subscriptions are not available yet." }, { status: 503 });
+    const limited = await consumeRateLimit(req, "newsletter", { limit: 3, windowSeconds: 3600 });
+    const limitResponse = rateLimitResponse(NextResponse, limited);
+    if (limitResponse) return limitResponse;
     const b = await req.json().catch(() => null);
     const email = String(b?.email ?? "").trim().toLowerCase();
     if (!isEmail(email))

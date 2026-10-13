@@ -2,7 +2,7 @@
 import { requireAdmin, str, uuid } from "@/lib/admin";
 import { uploadEntityImage } from "@/lib/storage";
 import { back, moveRow, nextSort, refreshStorefront } from "@/lib/cms-admin";
-import { RESERVED_SLUGS, SLUG_RE, getSectionDef, isSectionType, parseSectionContent, safeUrl, slugify } from "@/lib/cms-schema";
+import { RESERVED_SLUGS, SLUG_RE, getSectionDef, isSectionType, parseSectionContent, slugify } from "@/lib/cms-schema";
 const LIST = "/admin/pages";
 const edit = (id) => `${LIST}/${id}`;
 function checkSlug(slug, isHome) {
@@ -46,9 +46,18 @@ export async function updatePage(fd) {
     if (bad)
         back(edit(id), "error", bad);
     const canonicalRaw = str(fd, "canonical_url", 300);
-    const canonical = canonicalRaw ? (/^https?:\/\//i.test(canonicalRaw) ? safeUrl(canonicalRaw) : null) : "";
-    if (canonical === null)
-        back(edit(id), "error", "Canonical URL must start with https:// (or leave it empty).");
+    let canonical = "";
+    if (canonicalRaw) {
+        try {
+            const parsed = new URL(canonicalRaw);
+            if (parsed.protocol !== "https:" || !parsed.hostname || parsed.username || parsed.password)
+                throw new Error("invalid canonical");
+            parsed.hash = "";
+            canonical = parsed.toString();
+        } catch {
+            back(edit(id), "error", "Canonical URL must be a valid HTTPS URL without credentials (or leave it empty).");
+        }
+    }
     const { error } = await sb.from("pages").update({
         title, slug,
         seo_title: str(fd, "seo_title", 160) || null,

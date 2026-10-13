@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServer, hasSupabase } from "@/lib/supabase/server";
+import { consumeRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 export async function POST(req) {
     const fail = (e, s) => NextResponse.json({ error: e }, { status: s });
     if (!hasSupabase())
@@ -12,6 +13,9 @@ export async function POST(req) {
     const { data: { user } } = await sb.auth.getUser();
     if (!user)
         return fail("Sign in to leave a review.", 401);
+    const limited = await consumeRateLimit(req, "reviews", { limit: 5, windowSeconds: 3600, identifier: user.id });
+    const limitResponse = rateLimitResponse(NextResponse, limited);
+    if (limitResponse) return limitResponse;
     const { data: p } = await sb.from("products").select("id").eq("slug", slug).single();
     if (!p)
         return fail("Product not found.", 404);
