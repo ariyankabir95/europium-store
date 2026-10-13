@@ -65,10 +65,7 @@ async function trashOrder(fd) {
   const { error } = await sb.rpc("admin_set_order_trashed", { p_order: id, p_trashed: true });
   if (error) {
     console.error("[admin/orders] trash action failed", error.code);
-    const message = error.message?.includes("order_not_trashable")
-      ? "This order cannot be trashed because it may be paid or already in fulfillment. Keep it in Orders."
-      : "Could not move this order to Trash. Check the database migration and try again.";
-    back("/admin/orders", "error", message);
+    back("/admin/orders", "error", "Could not move this order to Trash. Check the database migration and try again.");
   }
 
   revalidatePath("/admin/orders");
@@ -267,17 +264,15 @@ export default async function Orders({ searchParams }) {
                 </details>
 
                 <OrderStatusForm order={o} action={update} statusOptions={STATUS} payOptions={PAY} selectClass={sel}/>
-                {["pending", "cancelled"].includes(o.status) && o.payment_status !== "paid" && (
-                  <form action={trashOrder} className="mt-3">
-                    <input type="hidden" name="id" value={o.id} />
-                    <ConfirmButton
-                      message="Move this pending/cancelled order to Trash? It will be hidden from active Orders and can be restored later. Pending stock reservations will be released."
-                      className="border border-red-800 px-3 py-2 text-xs font-medium text-red-800 hover:bg-red-50"
-                    >
-                      Move to Trash
-                    </ConfirmButton>
-                  </form>
-                )}
+                <form action={trashOrder} className="mt-3">
+                  <input type="hidden" name="id" value={o.id} />
+                  <ConfirmButton
+                    message="Hide this order from the active Orders list? Its payment status, order status, stock, and order history will remain unchanged. You can restore it from Admin → Trash."
+                    className="border border-red-800 px-3 py-2 text-xs font-medium text-red-800 hover:bg-red-50"
+                  >
+                    Move to Trash
+                  </ConfirmButton>
+                </form>
               </li>
             );
           })}
