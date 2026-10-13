@@ -17,7 +17,8 @@ export async function FeaturedProductsBlock({ c, ctx }) {
 const tileList = "-mx-5 flex snap-x gap-3 overflow-x-auto px-5 md:mx-0 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0 lg:grid-cols-5";
 export async function CategoryGridBlock({ c }) {
     const wanted = new Set(cList(c, "category_slugs"));
-    const cats = (await getCategories()).filter((x) => !wanted.size || wanted.has(x.slug));
+    const allCategories = await getCategories();
+    const cats = allCategories.filter((x) => wanted.size ? wanted.has(x.slug) : !x.parent_id);
     if (!cats.length)
         return null;
     return (<section className="section container-site">
