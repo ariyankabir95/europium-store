@@ -72,7 +72,7 @@
 - [ ] Ensure checkout failures are understandable and do not leave inconsistent stock reservations.
 
 ### I. Email and support
-- [x] Add durable order-email recovery using stored request payloads, deterministic Resend idempotency keys, stale-claim leases and a 20-hour automatic-retry cutoff; requires migration `0025_order_email_recovery.sql` and a separately configured 5-minute Render Cron Job at `/api/cron/retry-order-emails`.
+- [x] Add durable order-email recovery using stored request payloads, deterministic Resend idempotency keys, stale-claim leases, a five-attempt cap and a 20-hour automatic-retry cutoff; requires migration `0025_order_email_recovery.sql` and a separately configured 5-minute Render Cron Job at `/api/cron/retry-order-emails`.
 - [ ] Verify order-placed, payment-received and status-change emails with disposable-database/provider tests, including concurrent retries, network timeouts, and events moved to `needs_review`.
 - [ ] Keep Resend API key server-only; clearly separate test sender limitations from verified-domain production sending.
 - [ ] Manage support conversations and replies from Admin.
