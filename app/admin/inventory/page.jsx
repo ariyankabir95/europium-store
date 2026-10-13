@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireAdmin, str, uuid } from "@/lib/admin";
 
@@ -12,7 +13,7 @@ async function update(fd) {
   const low = Math.trunc(Number(str(fd, "low")));
   if (!uuid(id) || !Number.isSafeInteger(stock) || stock < 0 || !Number.isSafeInteger(low) || low < 0) return;
   const { error } = await sb.from("product_variants").update({ stock, low_stock_threshold: low }).eq("id", id);
-  if (error) throw new Error("Could not update inventory. Refresh the page and try again.");
+  if (error) redirect("/admin/inventory?error=Could%20not%20update%20inventory.%20Refresh%20the%20page%20and%20try%20again.");
   revalidatePath("/admin/inventory");
   revalidatePath("/admin/products");
 }
@@ -28,8 +29,10 @@ function inventoryUrl(q, page) {
 export default async function Inventory({ searchParams }) {
   const sb = await requireAdmin();
   const sp = await searchParams;
-  const q = str(sp.q, 80).replace(/[,%()]/g, " ").trim();
-  const requestedPage = Math.trunc(Number(sp.page ?? 1));
+  const rawQuery = Array.isArray(sp.q) ? sp.q[0] : sp.q;
+  const q = String(rawQuery ?? "").trim().slice(0, 80).replace(/[,%()]/g, " ").trim();
+  const rawPage = Array.isArray(sp.page) ? sp.page[0] : sp.page;
+  const requestedPage = Math.trunc(Number(rawPage ?? 1));
   const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
   const start = (page - 1) * PAGE_SIZE;
 
@@ -45,6 +48,7 @@ export default async function Inventory({ searchParams }) {
   const total = count ?? 0;
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const shownPage = Math.min(page, pages);
+  if (total > 0 && page > pages) redirect(inventoryUrl(q, pages));
 
   return (
     <>
@@ -57,6 +61,7 @@ export default async function Inventory({ searchParams }) {
         {q && <Link href="/admin/inventory" className="btn-line flex min-h-11 items-center px-4">Clear</Link>}
       </form>
 
+      {sp.error && <p role="alert" className="mb-4 border border-red-800 p-3 text-sm text-red-800">{String(sp.error)}</p>}
       {error && <p role="alert" className="mb-4 border border-red-800 p-3 text-sm text-red-800">Could not load inventory. Refresh the page or check the server logs.</p>}
       {!error && total === 0 && <p className="border-y border-sand py-5 text-sm text-umber">{q ? "No variants match that search." : "No variants yet. Add product sizes and colors under Products."}</p>}
 
