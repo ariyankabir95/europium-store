@@ -139,8 +139,8 @@ export default function SearchOverlay({ open, onClose = () => {}, inline = false
               <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4 stroke-current" fill="none" strokeWidth="1.5"><circle cx="8.5" cy="8.5" r="5.8"/><path d="m13 13 4 4" strokeLinecap="round"/></svg>
             </button>
             {term && (
-              <button type="button" onClick={() => { setQ(""); inputRef.current?.focus(); }} aria-label="Clear search" className="flex h-8 flex-none items-center justify-center rounded-full border border-sand px-3 text-[10px] uppercase tracking-[0.12em] text-taupe transition-colors hover:border-charcoal hover:text-charcoal">
-                Clear
+              <button type="button" onClick={() => { setQ(""); inputRef.current?.focus(); }} aria-label="Clear search" title="Clear search" className="flex h-8 w-8 flex-none items-center justify-center rounded-full text-taupe transition-colors hover:bg-cream hover:text-charcoal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/30">
+                <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4 stroke-current" fill="none" strokeWidth="1.5"><path d="m5 5 10 10M15 5 5 15" strokeLinecap="round"/></svg>
               </button>
             )}
             <button type="button" onClick={onClose} aria-label="Close search" className="flex h-10 w-10 flex-none items-center justify-center text-taupe transition-colors hover:text-charcoal">
