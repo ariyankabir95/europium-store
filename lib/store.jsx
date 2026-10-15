@@ -26,7 +26,7 @@ function parseItems(j) {
     return out;
 }
 const sameLine = (a, b) => a.productId === b.productId && a.size === b.size && a.color === b.color;
-export function StoreProvider({ children, products }) {
+export function StoreProvider({ children }) {
     const [cart, setCart] = useState([]);
     const [cartStatus, setCartStatus] = useState("loading");
     const [wish, setWish] = useState([]);
@@ -235,7 +235,7 @@ export function StoreProvider({ children, products }) {
     catch { } }, [wish, ready]);
     const toggleWish = (id) => setWish((w) => (w.includes(id) ? w.filter((x) => x !== id) : [...w, id]));
     const count = useMemo(() => (signedIn ? cart.reduce((n, l) => n + l.qty, 0) : 0), [signedIn, cart]);
-    return (<StoreCtx.Provider value={{ open, setOpen, products, cart: signedIn ? cart : [], cartStatus, signedIn, refreshCart, wish, count, add, setQty, remove, toggleWish, clear, authOpen, authReason, authReturnTo, authPending, openAuth, closeAuth, finishAuth, notice, notify, clearNotice, currency, setCurrency }}>
+    return (<StoreCtx.Provider value={{ open, setOpen, cart: signedIn ? cart : [], cartStatus, signedIn, refreshCart, wish, count, add, setQty, remove, toggleWish, clear, authOpen, authReason, authReturnTo, authPending, openAuth, closeAuth, finishAuth, notice, notify, clearNotice, currency, setCurrency }}>
       {children}
     </StoreCtx.Provider>);
 }

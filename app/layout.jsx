@@ -1,7 +1,6 @@
 import { Asap, Bebas_Neue } from "next/font/google";
 import Footer from "@/components/layout/Footer";
 import AdsterraSocialBar from "@/components/ads/AdsterraSocialBar";
-import { getProducts } from "@/lib/catalog";
 import { DEFAULT_SETTINGS, getPublicSettings } from "@/lib/cms";
 import { getHeader } from "@/lib/cms-data";
 import { NavProvider } from "@/components/layout/NavContext";
@@ -77,8 +76,7 @@ const fonts = {
     },
 };
 export default async function RootLayout({ children, }) {
-    const [products, settings, header] = await Promise.all([
-        getProducts(),
+    const [settings, header] = await Promise.all([
         getPublicSettings(),
         getHeader(),
     ]);
@@ -101,7 +99,7 @@ export default async function RootLayout({ children, }) {
     return (<html lang="en" className={`${asap.variable} ${bebas.variable}`} style={style}>
       <body>
           <AdsterraSocialBar enabled={settings.adsterra_social_bar_enabled !== false}/>
-        <StoreProvider products={products}>
+        <StoreProvider>
           <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[80] focus:bg-warm focus:p-3">
             Skip to content
           </a>
