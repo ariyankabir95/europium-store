@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import Page from "@/components/layout/Page";
 import Placeholder from "@/components/ui/Placeholder";
 import SmartImage from "@/components/ui/SmartImage";
@@ -7,8 +8,17 @@ import { useStore } from "@/lib/store";
 import AuthGate from "@/components/auth/AuthGate";
 import { money, FREE_SHIPPING_MIN_BDT, SHIPPING_FEE_BDT } from "@/lib/format";
 function CartContents() {
-    const { products, cart, setQty, remove, currency } = useStore();
-    const getProduct = (id) => products.find((p) => p.id === id);
+    const { cart, setQty, remove, currency } = useStore();
+    const [products, setProducts] = useState([]);
+    useEffect(() => {
+        const controller = new AbortController();
+        fetch("/api/catalog", { signal: controller.signal, cache: "no-store" })
+            .then((response) => response.ok ? response.json() : [])
+            .then((data) => { if (!controller.signal.aborted) setProducts(Array.isArray(data) ? data : []); })
+            .catch((error) => { if (error.name !== "AbortError" && !controller.signal.aborted) setProducts([]); });
+        return () => controller.abort();
+    }, []);
+    const getProduct = (slug) => products.find((p) => p.slug === slug);
     const lines = cart.map((l, i) => ({ ...l, i, p: getProduct(l.productId) })).filter((l) => l.p);
     const subtotal = lines.reduce((n, l) => n + (l.p.salePrice ?? l.p.price) * l.qty, 0);
     const shipping = subtotal === 0 || subtotal >= FREE_SHIPPING_MIN_BDT ? 0 : SHIPPING_FEE_BDT;
