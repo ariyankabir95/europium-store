@@ -148,7 +148,7 @@ export default function SearchOverlay({ open, onClose = () => {}, inline = false
                 <path d="M4 4l12 12M16 4L4 16" strokeLinecap="round" />
               </svg>
             </button>
-          </div>
+          </form>
 
           {term.length < 2 ? (
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-5 text-xs uppercase tracking-[0.14em] text-taupe">
