@@ -117,10 +117,10 @@ export default function Header({ overlay = false, bar }) {
         </nav>
         <div className="flex items-center gap-1 text-xs tracking-[0.12em] uppercase">
           {/* Compact search trigger on smaller screens; wide screens get the persistent Believers-style field. */}
-          <button onClick={() => { setOpen(false); setSearchOpen(true); }} aria-haspopup="dialog" aria-expanded={searchOpen} aria-label="Open search" className="flex min-h-11 items-center gap-2 px-2 transition-colors hover:text-umber xl:hidden">
+          {!searchOpen && <button onClick={() => { setOpen(false); setSearchOpen(true); }} aria-haspopup="dialog" aria-expanded={searchOpen} aria-label="Open search" className="flex min-h-11 items-center gap-2 px-2 transition-colors hover:text-umber xl:hidden">
             <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4 flex-none stroke-current" fill="none" strokeWidth="1.5"><circle cx="8.5" cy="8.5" r="5.8"/><path d="m13 13 4 4" strokeLinecap="round"/></svg>
             <span className="hidden sm:inline">Search</span>
-          </button>
+          </button>}
           <div className="hidden w-56 xl:block 2xl:w-64">
             <SearchOverlay open inline />
           </div>
