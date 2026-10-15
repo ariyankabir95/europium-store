@@ -181,8 +181,6 @@ export default function SearchOverlay({ open, onClose }) {
                     ))}
                   </ul>
                 </section>
-              ) : categories.length === 0 ? (
-                <p className="py-7 text-sm text-umber">No exact matches for “{term}”. Try a product name, category or material.</p>
               ) : null}
               {categories.length === 0 && results.length === 0 && (
                 <div className="mt-4 border-t border-sand pt-4 text-sm text-umber">
