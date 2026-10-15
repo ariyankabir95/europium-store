@@ -122,7 +122,7 @@ export default function SearchOverlay({ open, onClose = () => {}, inline = false
         role="search"
         className="max-h-[calc(100vh-4rem)] overflow-y-auto border-y border-sand bg-warm text-charcoal shadow-[0_24px_55px_rgba(38,36,33,0.16)]"
       >
-        <div className="container-site py-5 md:py-7">
+        <div className="container-site py-4 md:py-7">
           <form action="/search" method="get" role="search" className="flex items-center gap-3 rounded-full border border-charcoal/20 bg-transparent px-4 py-1 transition-colors focus-within:border-charcoal/60 md:gap-4">
             <input
               ref={inputRef}
@@ -139,7 +139,7 @@ export default function SearchOverlay({ open, onClose = () => {}, inline = false
               <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4 stroke-current" fill="none" strokeWidth="1.5"><circle cx="8.5" cy="8.5" r="5.8"/><path d="m13 13 4 4" strokeLinecap="round"/></svg>
             </button>
             {term && (
-              <button onClick={() => { setQ(""); inputRef.current?.focus(); }} aria-label="Clear search" className="flex h-10 w-10 flex-none items-center justify-center text-xs uppercase tracking-[0.12em] text-taupe hover:text-charcoal">
+              <button type="button" onClick={() => { setQ(""); inputRef.current?.focus(); }} aria-label="Clear search" className="flex h-8 flex-none items-center justify-center rounded-full border border-sand px-3 text-[10px] uppercase tracking-[0.12em] text-taupe transition-colors hover:border-charcoal hover:text-charcoal">
                 Clear
               </button>
             )}
@@ -160,17 +160,17 @@ export default function SearchOverlay({ open, onClose = () => {}, inline = false
           ) : loading ? (
             <p className="py-7 text-sm text-taupe">Finding the right pieces…</p>
           ) : (
-            <div className="pt-5 md:pt-6">
+            <div className="pt-4 md:pt-6">
               {categories.length > 0 && (
                 <section className="mb-6">
-                  <p className="mb-3 text-[10px] uppercase tracking-[0.2em] text-taupe">Categories</p>
+                  <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.2em] text-taupe">Categories</p>
                   <div className="flex flex-wrap gap-2">
                     {categories.map((category) => (
                       <Link
                         key={category.slug}
                         href={`/category/${category.slug}`}
                         onClick={onClose}
-                        className="group inline-flex min-h-11 items-center gap-3 border border-sand bg-cream/60 px-4 py-2 text-sm transition-colors hover:border-charcoal hover:bg-charcoal hover:text-warm"
+                        className="group inline-flex min-h-10 items-center gap-2 rounded-full border border-sand bg-cream/60 px-3.5 py-2 text-xs transition-colors hover:border-charcoal hover:bg-charcoal hover:text-warm sm:min-h-11 sm:rounded-none sm:px-4 sm:text-sm"
                       >
                         <span>{category.name}</span>
                         <span aria-hidden="true" className="text-taupe transition-transform group-hover:translate-x-0.5 group-hover:text-warm">↗</span>
@@ -182,19 +182,20 @@ export default function SearchOverlay({ open, onClose = () => {}, inline = false
 
               {results.length > 0 ? (
                 <section>
-                  <div className="mb-3 flex items-center justify-between">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-taupe">Matching pieces</p>
+                  <div className="mb-3 flex items-center justify-between border-b border-sand pb-3">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-taupe">Matching pieces</p>
                     <p className="text-xs text-taupe">{total} {total === 1 ? "result" : "results"}</p>
                   </div>
-                  <ul className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                  <ul className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-6 md:grid-cols-4 lg:grid-cols-5">
                     {results.map((product) => (
                       <li key={product.slug}>
-                        <Link href={`/product/${product.slug}`} onClick={onClose} className="group block">
-                          <div className="relative aspect-[4/5] overflow-hidden bg-cream">
+                        <Link href={`/product/${product.slug}`} onClick={onClose} className="group flex items-center gap-3 rounded-xl border border-sand/70 p-2 transition-colors hover:border-sand hover:bg-cream/50 sm:block sm:rounded-none sm:border-0 sm:p-0 sm:hover:bg-transparent">
+                          <div className="relative h-24 w-[76px] flex-none overflow-hidden rounded-lg bg-cream sm:aspect-[4/5] sm:h-auto sm:w-auto sm:rounded-none">
                             <SmartImage src={product.image} alt={product.name} sizes="(min-width: 768px) 200px, 45vw" fallback={<Placeholder label={product.name} tone="cream" />} />
                           </div>
-                          <p className="mt-3 truncate text-sm transition-colors group-hover:text-umber">{product.name}</p>
-                          <p className="mt-1 flex gap-2 text-xs text-taupe">
+                          <div className="min-w-0 flex-1 sm:block">
+                            <p className="line-clamp-2 text-sm leading-snug transition-colors group-hover:text-umber sm:mt-3 sm:truncate">{product.name}</p>
+                            <p className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-xs text-taupe sm:mt-1">
                             {product.salePrice ? (
                               <>
                                 <span className="text-charcoal">{money(product.salePrice, currency)}</span>
@@ -202,6 +203,8 @@ export default function SearchOverlay({ open, onClose = () => {}, inline = false
                               </>
                             ) : <span>{money(product.price, currency)}</span>}
                           </p>
+                          </div>
+                          <span aria-hidden="true" className="flex-none text-taupe sm:hidden">↗</span>
                         </Link>
                       </li>
                     ))}
