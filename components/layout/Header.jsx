@@ -34,29 +34,48 @@ function DesktopNavItem({ n, depth = 0 }) {
           <NavAnchor n={n} className={depth === 0 ? "underline-offset-8 hover:underline" : "flex-1 whitespace-nowrap"}/>
           <span aria-hidden="true" className="text-[10px]">{depth === 0 ? "⌄" : "›"}</span>
         </div>
-        <div className={`invisible absolute z-50 min-w-48 translate-y-1 border border-sand bg-warm py-1 text-charcoal opacity-0 shadow-lg transition-all duration-200 ease-out group-hover/navitem:visible group-hover/navitem:translate-y-0 group-hover/navitem:opacity-100 group-focus-within/navitem:visible group-focus-within/navitem:translate-y-0 group-focus-within/navitem:opacity-100 ${depth === 0 ? "left-0 top-full" : "left-full top-0"}`}>
+        <div className={`invisible absolute z-50 min-w-52 translate-y-1 rounded-sm border border-sand bg-warm py-2 text-charcoal opacity-0 shadow-[0_18px_45px_rgba(38,36,33,0.14)] transition-all duration-200 ease-out group-hover/navitem:visible group-hover/navitem:translate-y-0 group-hover/navitem:opacity-100 group-focus-within/navitem:visible group-focus-within/navitem:translate-y-0 group-focus-within/navitem:opacity-100 ${depth === 0 ? "left-0 top-full" : "left-full top-0"}`}>
           {children.map((child) => <DesktopNavItem key={child.id} n={child} depth={depth + 1}/>)}
         </div>
       </div>
     );
 }
 function MobileNavItem({ n, onClick, depth = 0 }) {
-    const base = "block transition-colors duration-200 hover:text-umber";
+    const [expanded, setExpanded] = useState(false);
+    const children = Array.isArray(n.children) ? n.children : [];
+    const base = "block min-w-0 transition-colors duration-200 hover:text-umber";
     const className = depth === 0
-        ? `${base} py-4 font-serif text-3xl`
+        ? `${base} py-4 font-serif text-2xl sm:text-3xl`
         : depth === 1
-            ? `${base} py-3 text-xl text-charcoal`
-            : `${base} py-2 text-lg text-umber`;
-    const children = n.children ?? [];
+            ? `${base} py-3 text-base text-charcoal sm:text-lg`
+            : `${base} py-2 text-sm text-umber sm:text-base`;
+
+    if (!children.length) {
+        return <NavAnchor n={n} onClick={onClick} className={className}/>;
+    }
+
     return (
-      <>
-        <NavAnchor n={n} onClick={onClick} className={className}/>
-        {children.length > 0 && (
-          <div className="ml-1 border-l border-sand pl-5">
+      <div className="py-1">
+        <div className="flex items-center gap-3">
+          <NavAnchor n={n} onClick={onClick} className={`${className} flex-1`}/>
+          <button
+            type="button"
+            aria-label={`${expanded ? "Collapse" : "Expand"} ${n.label} submenu`}
+            aria-expanded={expanded}
+            onClick={() => setExpanded((value) => !value)}
+            className="flex h-11 w-11 flex-none items-center justify-center border border-sand text-umber transition-colors hover:border-charcoal hover:bg-cream hover:text-charcoal"
+          >
+            <svg aria-hidden="true" viewBox="0 0 16 16" className={`h-3.5 w-3.5 fill-none stroke-current transition-transform duration-200 ${expanded ? "rotate-180" : ""}`} strokeWidth="1.5">
+              <path d="m3 6 5 5 5-5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        {expanded && (
+          <div className="mb-3 ml-1 mt-2 space-y-1 border-l-2 border-sand pl-4 sm:pl-5">
             {children.map((child) => <MobileNavItem key={child.id} n={child} onClick={onClick} depth={depth + 1}/>)}
           </div>
         )}
-      </>
+      </div>
     );
 }
 /*
@@ -98,7 +117,10 @@ export default function Header({ overlay = false, bar }) {
         </nav>
         <div className="flex items-center gap-1 text-xs tracking-[0.12em] uppercase">
           {/* Opens the inline overlay below instead of navigating to /search -- no separate page needed to search. */}
-          <button onClick={() => { setOpen(false); setSearchOpen(true); }} aria-haspopup="dialog" aria-expanded={searchOpen} className="flex min-h-11 items-center px-2">Search</button>
+          <button onClick={() => { setOpen(false); setSearchOpen(true); }} aria-haspopup="dialog" aria-expanded={searchOpen} aria-label="Open search" className="flex min-h-11 items-center gap-2 px-2 transition-colors hover:text-umber">
+            <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4 flex-none stroke-current" fill="none" strokeWidth="1.5"><circle cx="8.5" cy="8.5" r="5.8"/><path d="m13 13 4 4" strokeLinecap="round"/></svg>
+            <span className="hidden sm:inline">Search</span>
+          </button>
           {icons.map(([l, h]) => <Link key={l} href={h} className={`min-h-11 items-center px-2 ${l === "Cart" ? "flex" : "hidden lg:flex"}`}>{l}{l === "Cart" && count > 0 ? ` (${count})` : ""}{l === "Wishlist" && wish.length > 0 ? ` (${wish.length})` : ""}</Link>)}
           <CurrencySelect currency={currency} onChange={setCurrency} tone={solid ? "solid" : "overlay"} className="ml-1 hidden lg:inline-flex"/>
           <button className="flex min-h-11 min-w-11 items-center justify-center px-2 lg:hidden" aria-expanded={open} aria-controls="drawer" aria-label={open ? "Close menu" : "Open menu"} onClick={() => { setSearchOpen(false); setOpen(!open); }}>
