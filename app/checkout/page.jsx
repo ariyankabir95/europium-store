@@ -102,7 +102,7 @@ function CheckoutContents() {
 
           <div className="sm:col-span-2 border border-sand p-5">
             <p className="text-xs tracking-[0.18em] uppercase">Local delivery area</p>
-            <p className="mt-2 text-sm text-taupe">EUROPIUM currently delivers in selected areas of Savar only.</p>
+            <p className="mt-2 text-sm text-taupe">EUROPIUM currently delivers in selected areas of Savar only. Select your area to see the delivery charge.</p>
             <div className="mt-4 space-y-3">
               {deliveryZones.map((z) => (
                 <label key={z.value} className="flex cursor-pointer items-start gap-3 border border-sand p-3">
@@ -121,13 +121,14 @@ function CheckoutContents() {
             <div className="mt-4 space-y-4">
               <label className="flex items-start gap-3 text-sm">
                 <input type="radio" name="paymentChoice" value="cod" checked={paymentMethod === "cod"} onChange={() => setPaymentMethod("cod")} className="mt-1" />
-                <span><strong>Cash on Delivery (COD)</strong><span className="block text-taupe">Pay in cash when your order is delivered.</span></span>
+                <span><strong>Cash on Delivery (COD)</strong><span className="block text-taupe">Pay the product amount in cash when your order is delivered.</span></span>
               </label>
               <label className="flex items-start gap-3 text-sm">
                 <input type="radio" name="paymentChoice" value="bkash_manual" checked={paymentMethod === "bkash_manual"} onChange={() => setPaymentMethod("bkash_manual")} className="mt-1" />
                 <span><strong>Prepayment — bKash</strong><span className="block text-taupe">{paymentReady ? "Pay before delivery to " + config.bkash_number + ". Your order is confirmed after payment verification." : "Prepayment is unavailable until the store configures its bKash number."}</span></span>
               </label>
             </div>
+            {paymentMethod === "cod" && <div className="mt-5 border border-amber-300 bg-amber-50 p-4 text-sm leading-6 text-amber-950"><strong>Important: delivery charge must be paid in advance.</strong><p className="mt-1">COD applies to the product amount only. Please pay the delivery charge before dispatch using the store-confirmed payment instructions. We will confirm the delivery-charge payment process with you before shipping.</p></div>}
             {paymentMethod === "bkash_manual" && paymentReady && (
               <>
                 <p className="mt-4 whitespace-pre-line text-sm text-umber">{config.bkash_instructions}</p>
@@ -145,7 +146,7 @@ function CheckoutContents() {
           <p className="mt-4 flex justify-between border-t border-sand pt-3"><span>Subtotal</span><span>{money(subtotal, currency)}</span></p>
           <p className="mt-2 flex justify-between"><span>Delivery{selectedZone ? " · " + selectedZone.label : ""}</span><span>{selectedZone ? money(shippingFee, currency) : "Select area"}</span></p>
           <p className="mt-3 flex justify-between border-t border-sand pt-3 font-medium"><span>Estimated total before coupon</span><span>{selectedZone ? money(subtotal + shippingFee, currency) : "—"}</span></p>
-          <p className="mt-3 text-xs text-taupe">Delivery is currently available only in the selected Savar-area zones. Final total and any coupon discount are calculated securely on the server.</p>
+          <p className="mt-3 text-xs text-taupe">Delivery is currently available only in the selected Savar-area zones. For COD, the delivery charge must be paid in advance; the product amount is paid on delivery. Final total and any coupon discount are calculated securely on the server.</p>
           {currency !== "BDT" && <p className="mt-4 text-xs text-umber">Prices are shown in {currency} for reference. All payments and delivery charges are calculated in BDT.</p>}
           {paymentMethod === "bkash_manual" && <p className="mt-4 text-xs text-umber">Your order remains unpaid until an admin verifies the bKash transaction ID.</p>}
           <button disabled={busy || !zone || (paymentMethod === "bkash_manual" && !paymentReady)} className="btn-dark mt-5 w-full">{busy ? "Placing order" : "Place order"}</button>
