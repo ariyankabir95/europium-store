@@ -112,21 +112,26 @@ export default function Header({ overlay = false, bar }) {
       {bar && <p className="bg-charcoal py-2 text-center text-xs tracking-[0.12em] text-warm">{bar}</p>}
       <div className="container-site flex h-16 items-center justify-between md:h-20">
         <Link href="/" className="font-display text-2xl tracking-[0.25em]">{logoText}</Link>
-        <nav aria-label="Primary" className="hidden gap-8 text-xs tracking-[0.18em] uppercase lg:flex">
-          {items.map((n) => <DesktopNavItem key={n.id} n={n}/>)}
-        </nav>
         <div className="flex items-center gap-1 text-xs tracking-[0.12em] uppercase">
-          {/* Opens the inline overlay below instead of navigating to /search -- no separate page needed to search. */}
-          <button onClick={() => { setOpen(false); setSearchOpen(true); }} aria-haspopup="dialog" aria-expanded={searchOpen} aria-label="Open search" className="flex min-h-11 items-center gap-2 px-2 transition-colors hover:text-umber">
+          {/* Compact search trigger on smaller screens; wide screens get the persistent Believers-style field. */}
+          <button onClick={() => { setOpen(false); setSearchOpen(true); }} aria-haspopup="dialog" aria-expanded={searchOpen} aria-label="Open search" className="flex min-h-11 items-center gap-2 px-2 transition-colors hover:text-umber xl:hidden">
             <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4 flex-none stroke-current" fill="none" strokeWidth="1.5"><circle cx="8.5" cy="8.5" r="5.8"/><path d="m13 13 4 4" strokeLinecap="round"/></svg>
             <span className="hidden sm:inline">Search</span>
           </button>
+          <div className="hidden w-56 xl:block 2xl:w-64">
+            <SearchOverlay open inline />
+          </div>
           {icons.map(([l, h]) => <Link key={l} href={h} className={`min-h-11 items-center px-2 ${l === "Cart" ? "flex" : "hidden lg:flex"}`}>{l}{l === "Cart" && count > 0 ? ` (${count})` : ""}{l === "Wishlist" && wish.length > 0 ? ` (${wish.length})` : ""}</Link>)}
           <CurrencySelect currency={currency} onChange={setCurrency} tone={solid ? "solid" : "overlay"} className="ml-1 hidden lg:inline-flex"/>
           <button className="flex min-h-11 min-w-11 items-center justify-center px-2 lg:hidden" aria-expanded={open} aria-controls="drawer" aria-label={open ? "Close menu" : "Open menu"} onClick={() => { setSearchOpen(false); setOpen(!open); }}>
             <MenuIcon open={open}/>
           </button>
         </div>
+      </div>
+      <div className="container-site hidden border-t border-sand/70 py-3 lg:block">
+        <nav aria-label="Primary" className="flex items-center gap-8 text-xs tracking-[0.18em] uppercase">
+          {items.map((n) => <DesktopNavItem key={n.id} n={n}/>)}
+        </nav>
       </div>
       <div id="drawer" className={`fixed inset-0 z-50 flex flex-col bg-warm text-charcoal transition-transform duration-300 lg:hidden ${open ? "translate-x-0" : "invisible translate-x-full"}`} aria-hidden={!open}>
         <div className="container-site flex h-16 flex-none items-center justify-between border-b border-sand">
