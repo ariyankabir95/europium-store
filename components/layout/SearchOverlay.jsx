@@ -6,7 +6,7 @@ import Placeholder from "@/components/ui/Placeholder";
 import { useStore } from "@/lib/store";
 import { money } from "@/lib/format";
 
-export default function SearchOverlay({ open, onClose }) {
+export default function SearchOverlay({ open, onClose = () => {}, inline = false }) {
   const { currency } = useStore();
   const [q, setQ] = useState("");
   const [results, setResults] = useState([]);
@@ -17,7 +17,7 @@ export default function SearchOverlay({ open, onClose }) {
   const panelRef = useRef(null);
 
   useEffect(() => {
-    if (!open) {
+    if (!open || inline) {
       setQ("");
       setResults([]);
       setCategories([]);
@@ -25,12 +25,13 @@ export default function SearchOverlay({ open, onClose }) {
       setLoading(false);
       return;
     }
+    if (inline) return;
     const timer = setTimeout(() => inputRef.current?.focus(), 60);
     return () => clearTimeout(timer);
-  }, [open]);
+  }, [open, inline]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || inline) return;
     const onKey = (event) => {
       if (event.key === "Escape") onClose();
     };
@@ -45,7 +46,7 @@ export default function SearchOverlay({ open, onClose }) {
       document.removeEventListener("mousedown", onOutsideClick);
       document.removeEventListener("touchstart", onOutsideClick);
     };
-  }, [open, onClose]);
+  }, [open, onClose, inline]);
 
   useEffect(() => {
     if (!open) return;
@@ -86,8 +87,30 @@ export default function SearchOverlay({ open, onClose }) {
     };
   }, [open, q]);
 
-  if (!open) return null;
+  if (!open && !inline) return null;
   const term = q.trim();
+
+  if (inline) {
+    return (
+      <div ref={panelRef} className="relative w-full text-charcoal">
+        <div role="search" className="flex h-11 items-center gap-2 border border-sand bg-cream/70 px-3 transition-colors focus-within:border-umber focus-within:bg-warm">
+          <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4 flex-none stroke-current text-umber" fill="none" strokeWidth="1.5"><circle cx="8.5" cy="8.5" r="5.8"/><path d="m13 13 4 4" strokeLinecap="round"/></svg>
+          <input ref={inputRef} value={q} onChange={(event) => setQ(event.target.value)} type="search" placeholder="Search products..." aria-label="Search products" autoComplete="off" className="min-w-0 w-full bg-transparent text-sm placeholder:text-taupe focus:outline-none" />
+          {term && <button type="button" onClick={() => { setQ(""); inputRef.current?.focus(); }} aria-label="Clear search" className="text-[10px] uppercase tracking-wider text-taupe hover:text-charcoal">Clear</button>}
+        </div>
+        {term.length >= 2 && (
+          <div className="absolute left-0 right-0 top-full z-[60] mt-2 max-h-[70vh] overflow-y-auto border border-sand bg-warm p-3 text-charcoal shadow-[0_18px_45px_rgba(38,36,33,0.16)]">
+            {loading ? <p className="px-2 py-4 text-sm text-taupe">Searching products...</p> : (categories.length > 0 || results.length > 0) ? (
+              <>
+                {categories.length > 0 && <div className="mb-3 border-b border-sand pb-3"><p className="mb-2 text-[10px] uppercase tracking-[0.18em] text-taupe">Categories</p><div className="flex flex-wrap gap-2">{categories.map((category) => <Link key={category.slug} href={"/category/" + category.slug} className="border border-sand px-2.5 py-2 text-xs hover:border-charcoal hover:bg-cream">{category.name} ↗</Link>)}</div></div>}
+                {results.length > 0 && <><div className="mb-2 flex items-center justify-between"><p className="text-[10px] uppercase tracking-[0.18em] text-taupe">Products</p><span className="text-[10px] text-taupe">{total} found</span></div><ul className="space-y-1">{results.slice(0, 5).map((product) => <li key={product.slug}><Link href={"/product/" + product.slug} className="flex items-center gap-3 p-2 transition-colors hover:bg-cream"><div className="relative h-14 w-12 flex-none overflow-hidden bg-cream"><SmartImage src={product.image} alt={product.name} sizes="48px" fallback={<Placeholder label={product.name} tone="cream"/>}/></div><div className="min-w-0 flex-1"><p className="truncate text-xs">{product.name}</p><p className="mt-1 text-xs text-umber">{money(product.salePrice || product.price, currency)}{product.salePrice ? <span className="ml-2 text-taupe line-through">{money(product.price, currency)}</span> : null}</p></div><span aria-hidden="true" className="text-taupe">↗</span></Link></li>)}</ul></>}
+              </>
+            ) : <p className="px-2 py-4 text-sm text-taupe">No matches for “{term}”. Try another product or category.</p>}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-x-0 top-16 z-50 md:top-20" role="dialog" aria-label="Store search">
