@@ -4,7 +4,19 @@ import { useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
 import { useHeaderNav } from "@/components/layout/NavContext";
 import { CURRENCIES, CURRENCY_META, isCurrency } from "@/lib/format";
-const icons = [["Search", "/search"], ["Wishlist", "/wishlist"], ["Account", "/account"], ["Cart", "/cart"]];
+import SearchOverlay from "@/components/layout/SearchOverlay";
+const icons = [["Wishlist", "/wishlist"], ["Account", "/account"], ["Cart", "/cart"]];
+/** Animated 3-line -> X menu icon, replacing the old plain "Menu" text label (mobile only). */
+function MenuIcon({ open }) {
+    return (<span aria-hidden="true" className="relative flex h-4 w-5 flex-col justify-between">
+      <span className={`block h-px w-full bg-current transition-transform duration-300 ${open ? "translate-y-[7px] rotate-45" : ""}`}/>
+      <span className={`block h-px w-full bg-current transition-opacity duration-200 ${open ? "opacity-0" : "opacity-100"}`}/>
+      <span className={`block h-px w-full bg-current transition-transform duration-300 ${open ? "-translate-y-[7px] -rotate-45" : ""}`}/>
+    </span>);
+}
+function CloseIcon() {
+    return (<svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4 stroke-current" fill="none" strokeWidth="1.5"><path d="M4 4l12 12M16 4L4 16" strokeLinecap="round"/></svg>);
+}
 function NavAnchor({ n, className, onClick }) {
     const external = /^(https?:|mailto:|tel:)/i.test(n.href);
     if (external || n.newTab)
@@ -22,24 +34,28 @@ function DesktopNavItem({ n, depth = 0 }) {
           <NavAnchor n={n} className={depth === 0 ? "underline-offset-8 hover:underline" : "flex-1 whitespace-nowrap"}/>
           <span aria-hidden="true" className="text-[10px]">{depth === 0 ? "⌄" : "›"}</span>
         </div>
-        <div className={`absolute z-50 hidden min-w-48 border border-sand bg-warm py-1 text-charcoal shadow-lg group-hover/navitem:block group-focus-within/navitem:block ${depth === 0 ? "left-0 top-full" : "left-full top-0"}`}>
+        <div className={`invisible absolute z-50 min-w-48 translate-y-1 border border-sand bg-warm py-1 text-charcoal opacity-0 shadow-lg transition-all duration-200 ease-out group-hover/navitem:visible group-hover/navitem:translate-y-0 group-hover/navitem:opacity-100 group-focus-within/navitem:visible group-focus-within/navitem:translate-y-0 group-focus-within/navitem:opacity-100 ${depth === 0 ? "left-0 top-full" : "left-full top-0"}`}>
           {children.map((child) => <DesktopNavItem key={child.id} n={child} depth={depth + 1}/>)}
         </div>
       </div>
     );
 }
 function MobileNavItem({ n, onClick, depth = 0 }) {
+    const base = "block transition-colors duration-200 hover:text-umber";
     const className = depth === 0
-        ? "py-4 font-serif text-3xl"
+        ? `${base} py-4 font-serif text-3xl`
         : depth === 1
-            ? "py-3 pl-6 text-xl"
-            : depth === 2
-                ? "py-2 pl-10 text-lg"
-                : "py-2 pl-12 text-base";
+            ? `${base} py-3 text-xl text-charcoal`
+            : `${base} py-2 text-lg text-umber`;
+    const children = n.children ?? [];
     return (
       <>
         <NavAnchor n={n} onClick={onClick} className={className}/>
-        {(n.children ?? []).map((child) => <MobileNavItem key={child.id} n={child} onClick={onClick} depth={depth + 1}/>)}
+        {children.length > 0 && (
+          <div className="ml-1 border-l border-sand pl-5">
+            {children.map((child) => <MobileNavItem key={child.id} n={child} onClick={onClick} depth={depth + 1}/>)}
+          </div>
+        )}
       </>
     );
 }
@@ -67,6 +83,7 @@ export default function Header({ overlay = false, bar }) {
     const { items, logoText } = useHeaderNav();
     const [scrolled, setScrolled] = useState(false);
     const [open, setOpen] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
     const { count, wish, currency, setCurrency } = useStore();
     useEffect(() => { const f = () => setScrolled(window.scrollY > 40); f(); window.addEventListener("scroll", f, { passive: true }); return () => window.removeEventListener("scroll", f); }, []);
     useEffect(() => { document.body.style.overflow = open ? "hidden" : ""; if (!open)
@@ -80,18 +97,34 @@ export default function Header({ overlay = false, bar }) {
           {items.map((n) => <DesktopNavItem key={n.id} n={n}/>)}
         </nav>
         <div className="flex items-center gap-1 text-xs tracking-[0.12em] uppercase">
-          {icons.map(([l, h]) => <Link key={l} href={h} className={`min-h-11 items-center px-2 ${l === "Search" || l === "Cart" ? "flex" : "hidden lg:flex"}`}>{l}{l === "Cart" && count > 0 ? ` (${count})` : ""}{l === "Wishlist" && wish.length > 0 ? ` (${wish.length})` : ""}</Link>)}
+          {/* Opens the inline overlay below instead of navigating to /search -- no separate page needed to search. */}
+          <button onClick={() => { setOpen(false); setSearchOpen(true); }} aria-haspopup="dialog" aria-expanded={searchOpen} className="flex min-h-11 items-center px-2">Search</button>
+          {icons.map(([l, h]) => <Link key={l} href={h} className={`min-h-11 items-center px-2 ${l === "Cart" ? "flex" : "hidden lg:flex"}`}>{l}{l === "Cart" && count > 0 ? ` (${count})` : ""}{l === "Wishlist" && wish.length > 0 ? ` (${wish.length})` : ""}</Link>)}
           <CurrencySelect currency={currency} onChange={setCurrency} tone={solid ? "solid" : "overlay"} className="ml-1 hidden lg:inline-flex"/>
-          <button className="min-h-11 px-2 lg:hidden" aria-expanded={open} aria-controls="drawer" onClick={() => setOpen(true)}>Menu</button>
+          <button className="flex min-h-11 min-w-11 items-center justify-center px-2 lg:hidden" aria-expanded={open} aria-controls="drawer" aria-label={open ? "Close menu" : "Open menu"} onClick={() => { setSearchOpen(false); setOpen(!open); }}>
+            <MenuIcon open={open}/>
+          </button>
         </div>
       </div>
-      <div id="drawer" className={`fixed inset-0 z-50 bg-warm text-charcoal transition-transform duration-300 lg:hidden ${open ? "translate-x-0" : "invisible translate-x-full"}`} aria-hidden={!open}>
-        <div className="container-site flex h-16 items-center justify-between"><span className="font-display text-2xl tracking-[0.25em]">{logoText}</span><button className="min-h-11 px-2 text-xs uppercase tracking-[0.12em]" onClick={() => setOpen(false)}>Close</button></div>
-        <nav aria-label="Mobile" className="container-site flex flex-col divide-y divide-sand">
-          {items.map((n) => <MobileNavItem key={n.id} n={n} onClick={() => setOpen(false)}/>)}
-          {[["Wishlist", "/wishlist"], ["Account", "/account"]].map(([l, h]) => <Link key={l} href={h} onClick={() => setOpen(false)} className="py-4 font-serif text-3xl">{l}</Link>)}
-          <div className="flex items-center justify-between py-4"><span className="text-xs uppercase tracking-[0.18em] text-umber">Currency</span><CurrencySelect currency={currency} onChange={setCurrency} tone="panel" className="[&>select]:min-h-11"/></div>
+      <div id="drawer" className={`fixed inset-0 z-50 flex flex-col bg-warm text-charcoal transition-transform duration-300 lg:hidden ${open ? "translate-x-0" : "invisible translate-x-full"}`} aria-hidden={!open}>
+        <div className="container-site flex h-16 flex-none items-center justify-between border-b border-sand">
+          <span className="font-display text-2xl tracking-[0.25em]">{logoText}</span>
+          <button className="flex h-11 w-11 items-center justify-center text-taupe transition-colors duration-200 hover:text-charcoal" aria-label="Close menu" onClick={() => setOpen(false)}><CloseIcon/></button>
+        </div>
+        <nav aria-label="Mobile" className="container-site flex-1 overflow-y-auto pb-10">
+          <div className="flex flex-col divide-y divide-sand">
+            {items.map((n, i) => (<div key={n.id} className={`transition-all duration-300 ease-out ${open ? "translate-x-0 opacity-100" : "translate-x-3 opacity-0"}`} style={{ transitionDelay: open ? `${60 + i * 45}ms` : "0ms" }}>
+              <MobileNavItem n={n} onClick={() => setOpen(false)}/>
+            </div>))}
+          </div>
+          <div className={`mt-8 border-t border-sand pt-6 transition-all duration-300 ease-out ${open ? "translate-x-0 opacity-100" : "translate-x-3 opacity-0"}`} style={{ transitionDelay: open ? `${60 + items.length * 45}ms` : "0ms" }}>
+            <div className="flex gap-6 text-xs uppercase tracking-[0.18em] text-umber">
+              {[["Wishlist", "/wishlist"], ["Account", "/account"]].map(([l, h]) => <Link key={l} href={h} onClick={() => setOpen(false)} className="transition-colors duration-200 hover:text-charcoal">{l}</Link>)}
+            </div>
+            <div className="mt-5 flex items-center justify-between"><span className="text-xs uppercase tracking-[0.18em] text-umber">Currency</span><CurrencySelect currency={currency} onChange={setCurrency} tone="panel" className="[&>select]:min-h-11"/></div>
+          </div>
         </nav>
       </div>
+      <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)}/>
     </header>);
 }
