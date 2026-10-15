@@ -41,7 +41,7 @@ export default function CartDrawer() {
             });
         return () => controller.abort();
     }, [open, signedIn, cart.length]);
-    const lines = cart.map((l, i) => ({ ...l, i, p: products.find((x) => x.id === l.productId) })).filter((l) => l.p);
+    const lines = cart.map((l, i) => ({ ...l, i, p: products.find((x) => x.slug === l.productId) })).filter((l) => l.p);
     const sub = lines.reduce((n, l) => n + (l.p.salePrice ?? l.p.price) * l.qty, 0);
     return (<>
     <div onClick={() => setOpen(false)} aria-hidden="true" className={`fixed inset-0 z-[70] bg-charcoal/40 transition-opacity duration-300 ${open ? "opacity-100" : "pointer-events-none opacity-0"}`}/>
