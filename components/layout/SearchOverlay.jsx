@@ -123,27 +123,27 @@ export default function SearchOverlay({ open, onClose = () => {}, inline = false
         className="max-h-[calc(100vh-4rem)] overflow-y-auto border-y border-sand bg-warm text-charcoal shadow-[0_24px_55px_rgba(38,36,33,0.16)]"
       >
         <div className="container-site py-5 md:py-7">
-          <div className="flex items-center gap-3 border-b border-charcoal/20 pb-3 md:gap-4">
-            <svg aria-hidden="true" viewBox="0 0 20 20" className="h-5 w-5 flex-none stroke-current text-umber" fill="none" strokeWidth="1.5">
-              <circle cx="9" cy="9" r="6.5" />
-              <path d="M18 18l-4.3-4.3" strokeLinecap="round" />
-            </svg>
+          <form action="/search" method="get" role="search" className="flex items-center gap-3 rounded-full border border-charcoal/20 bg-transparent px-4 py-1 transition-colors focus-within:border-charcoal/60 md:gap-4">
             <input
               ref={inputRef}
+              name="q"
               value={q}
               onChange={(event) => setQ(event.target.value)}
               type="search"
               placeholder="Search products, categories, materials…"
               aria-label="Search products, categories and materials"
               autoComplete="off"
-              className="min-h-12 w-full border-0 bg-transparent font-serif text-xl placeholder:text-taupe/80 focus:outline-none md:text-2xl"
+              className="min-h-11 min-w-0 w-full border-0 bg-transparent font-serif text-lg placeholder:text-taupe/80 focus:outline-none md:min-h-12 md:text-2xl"
             />
+            <button type="submit" aria-label="Search" title="Search" className="flex h-9 w-9 flex-none items-center justify-center rounded-full text-taupe transition-colors hover:bg-charcoal hover:text-warm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-charcoal/30">
+              <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4 stroke-current" fill="none" strokeWidth="1.5"><circle cx="8.5" cy="8.5" r="5.8"/><path d="m13 13 4 4" strokeLinecap="round"/></svg>
+            </button>
             {term && (
               <button onClick={() => { setQ(""); inputRef.current?.focus(); }} aria-label="Clear search" className="flex h-10 w-10 flex-none items-center justify-center text-xs uppercase tracking-[0.12em] text-taupe hover:text-charcoal">
                 Clear
               </button>
             )}
-            <button onClick={onClose} aria-label="Close search" className="flex h-10 w-10 flex-none items-center justify-center text-taupe transition-colors hover:text-charcoal">
+            <button type="button" onClick={onClose} aria-label="Close search" className="flex h-10 w-10 flex-none items-center justify-center text-taupe transition-colors hover:text-charcoal">
               <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4 stroke-current" fill="none" strokeWidth="1.5">
                 <path d="M4 4l12 12M16 4L4 16" strokeLinecap="round" />
               </svg>
