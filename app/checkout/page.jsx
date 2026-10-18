@@ -14,8 +14,11 @@ const deliveryZones = [
 ];
 
 function CheckoutContents() {
-  const { products, cart, clear, currency, openAuth } = useStore();
-  const getProduct = (id) => products.find((p) => p.id === id);
+  const { cart, clear, currency, openAuth } = useStore();
+  const [products, setProducts] = useState([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState(false);
+  const getProduct = (slug) => products.find((p) => p.slug === slug);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [done, setDone] = useState(null);
@@ -28,10 +31,29 @@ function CheckoutContents() {
   const shippingFee = selectedZone?.fee ?? 0;
 
   useEffect(() => {
-    fetch("/api/store-config", { cache: "no-store" })
+    const controller = new AbortController();
+    fetch("/api/catalog", { cache: "no-store", signal: controller.signal })
+      .then((r) => {
+        if (!r.ok) throw new Error("Catalog unavailable");
+        return r.json();
+      })
+      .then((data) => {
+        if (!controller.signal.aborted) {
+          setProducts(Array.isArray(data) ? data : []);
+          setCatalogError(false);
+        }
+      })
+      .catch((error) => {
+        if (error.name !== "AbortError" && !controller.signal.aborted) setCatalogError(true);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCatalogLoading(false);
+      });
+    fetch("/api/store-config", { cache: "no-store", signal: controller.signal })
       .then((r) => r.json())
       .then((j) => setConfig({ bkash_number: String(j.bkash_number ?? ""), bkash_instructions: String(j.bkash_instructions ?? "") }))
       .catch(() => undefined);
+    return () => controller.abort();
   }, []);
 
   async function submit(e) {
@@ -84,8 +106,16 @@ function CheckoutContents() {
     );
   }
 
+  if (catalogLoading) {
+    return <Page title="Checkout"><p className="text-umber">Loading your cart…</p></Page>;
+  }
+
+  if (catalogError) {
+    return <Page title="Checkout"><p role="alert" className="text-umber">We couldn't load product details. Please refresh the page and try again.</p><Link href="/cart" className="btn-dark mt-6">Return to cart</Link></Page>;
+  }
+
   if (!lines.length) {
-    return <Page title="Checkout"><p className="text-umber">Your cart is empty.</p><Link href="/shop" className="btn-dark mt-6">Browse the shop</Link></Page>;
+    return <Page title="Checkout"><p className="text-umber">Your cart is empty or one of its products is no longer available.</p><Link href="/shop" className="btn-dark mt-6">Browse the shop</Link></Page>;
   }
 
   const paymentReady = Boolean(config.bkash_number.trim());
