@@ -10,20 +10,40 @@ import { money, FREE_SHIPPING_MIN_BDT, SHIPPING_FEE_BDT } from "@/lib/format";
 function CartContents() {
     const { cart, setQty, remove, currency } = useStore();
     const [products, setProducts] = useState([]);
+    const [catalogLoading, setCatalogLoading] = useState(true);
+    const [catalogError, setCatalogError] = useState(false);
     useEffect(() => {
         const controller = new AbortController();
         fetch("/api/catalog", { signal: controller.signal, cache: "no-store" })
-            .then((response) => response.ok ? response.json() : [])
-            .then((data) => { if (!controller.signal.aborted) setProducts(Array.isArray(data) ? data : []); })
-            .catch((error) => { if (error.name !== "AbortError" && !controller.signal.aborted) setProducts([]); });
+            .then((response) => {
+                if (!response.ok) throw new Error("Catalog unavailable");
+                return response.json();
+            })
+            .then((data) => {
+                if (!Array.isArray(data)) throw new Error("Invalid catalog response");
+                if (!controller.signal.aborted) {
+                    setProducts(data);
+                    setCatalogError(false);
+                }
+            })
+            .catch((error) => {
+                if (error.name !== "AbortError" && !controller.signal.aborted) setCatalogError(true);
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) setCatalogLoading(false);
+            });
         return () => controller.abort();
     }, []);
     const getProduct = (slug) => products.find((p) => p.slug === slug);
     const lines = cart.map((l, i) => ({ ...l, i, p: getProduct(l.productId) })).filter((l) => l.p);
     const subtotal = lines.reduce((n, l) => n + (l.p.salePrice ?? l.p.price) * l.qty, 0);
     const shipping = subtotal === 0 || subtotal >= FREE_SHIPPING_MIN_BDT ? 0 : SHIPPING_FEE_BDT;
+    if (catalogLoading)
+        return <Page title="Your cart"><p className="text-umber" role="status">Loading your cart…</p></Page>;
+    if (catalogError)
+        return <Page title="Your cart"><p className="text-umber" role="alert">We couldn't load product details. Your cart hasn't been cleared. Please try again.</p><button onClick={() => location.reload()} className="btn-dark mt-6">Try again</button></Page>;
     if (!lines.length)
-        return <Page title="Your cart"><p className="text-umber">Your cart is empty.</p><Link href="/shop" className="btn-dark mt-6">Continue shopping</Link></Page>;
+        return <Page title="Your cart"><p className="text-umber">Your cart is empty or a product is no longer available.</p><Link href="/shop" className="btn-dark mt-6">Continue shopping</Link></Page>;
     return (<Page title="Your cart">
       <div className="grid gap-12 md:grid-cols-[1fr_340px]">
         <ul className="divide-y divide-sand border-y border-sand">{lines.map((l) => (<li key={`${l.productId}-${l.size}-${l.color}`} className="flex gap-4 py-5">
